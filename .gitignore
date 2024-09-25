@@ -1,0 +1,6 @@
+.DS_Store
+*.md
+env/
+env/*/
+/*/env/
+.env
