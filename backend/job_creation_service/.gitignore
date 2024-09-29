@@ -1,0 +1,6 @@
+.env
+env/
+archive/
+__pycache__/
+*/__pycache__/
+*.ipynb

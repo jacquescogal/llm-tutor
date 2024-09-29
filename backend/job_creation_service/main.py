@@ -1,17 +1,14 @@
-import grpc
 from concurrent import futures
 import time
+from src.protos import job_pb2, job_pb2_grpc
+import grpc
 
-import greeter_pb2
-import greeter_pb2_grpc
-
-class GreeterServicer(greeter_pb2_grpc.GreeterServicer):
-    def SayHello(self, request, context):
-        return greeter_pb2.HelloReply(message=f'Hello, {request.name}!')
-
+class GreeterServicer(job_pb2_grpc.JobServiceServicer):
+    def ProcessJob(self, request, context):
+        return job_pb2.ProcessJobResponse()
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    greeter_pb2_grpc.add_GreeterServicer_to_server(GreeterServicer(), server)
+    job_pb2_grpc.add_JobServiceServicer_to_server(GreeterServicer(), server)
     server.add_insecure_port('[::]:50051')
     server.start()
     print("Server started at port 50051")

@@ -1,18 +1,31 @@
 version: '3.8'
 
 services:
-  mysql:
+  mysql-auth:
     image: mysql:8.0
     container_name: mysql-auth
     environment:
       MYSQL_ROOT_PASSWORD: "password"
       MYSQL_DATABASE: "user_db"
-      RESET_DB: "true"
     ports:
       - "3306:3306"
     volumes:
-      - mysql_data:/var/lib/mysql
-      - ./scripts:/docker-entrypoint-initdb.d
+      - mysql_auth_data:/var/lib/mysql
+      - ./database/auth_scripts:/docker-entrypoint-initdb.d
+    networks:
+      - backend
+
+  mysql-memory:
+    image: mysql:8.0
+    container_name: mysql-memory
+    environment:
+      MYSQL_ROOT_PASSWORD: "password"
+      MYSQL_DATABASE: "memory_db"
+    ports:
+      - "3307:3306"
+    volumes:
+      - mysql_memory_data:/var/lib/mysql
+      - ./database/memory_scripts:/docker-entrypoint-initdb.d
     networks:
       - backend
 
@@ -24,8 +37,27 @@ services:
     networks:
       - backend
 
+  weaviate:
+    image: semitechnologies/weaviate:latest
+    container_name: weaviate
+    environment:
+      QUERY_DEFAULTS_LIMIT: '20'
+      AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
+      PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+    ports:
+      - "8080:8080"
+      - 50051:50051
+    volumes:
+      - weaviate_data:/var/lib/weaviate
+    networks:
+      - backend
+
 volumes:
-  mysql_data:
+  mysql_auth_data:
+    driver: local
+  mysql_memory_data:
+    driver: local
+  weaviate_data:
     driver: local
 
 networks:

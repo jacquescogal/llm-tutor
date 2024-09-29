@@ -1,0 +1,14 @@
+// job.proto
+
+syntax = "proto3";
+
+
+service JobService {
+  rpc ProcessJob(ProcessJobRequest) returns (ProcessJobResponse);
+}
+message ProcessJobRequest {
+  string job_id = 1;
+}
+
+message ProcessJobResponse {
+}

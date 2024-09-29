@@ -78,4 +78,5 @@ message DBUser {
 
 message UserSession {
   int32 id = 1;
+  string username = 2;
 }

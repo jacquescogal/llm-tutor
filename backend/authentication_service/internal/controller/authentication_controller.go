@@ -7,6 +7,8 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"strings"
+	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
 )
@@ -32,8 +34,16 @@ func NewAuthenticationController(userRepo *repository.UserRepository, lock *cach
 // RegisterUser registers a new user
 func (authenticationController *AuthenticationController) RegisterUser(ctx context.Context, createUserRequest *authenticator.CreateUserRequest) (*authenticator.CreateUserResponse, error) {
 	// Parse request
-	username := createUserRequest.GetUsername()
-	password := createUserRequest.GetPassword()
+	username, err := parseUsername(createUserRequest.GetUsername())
+	if err != nil {
+		log.Printf("Failed to parse username: %v\n", err)
+		return &authenticator.CreateUserResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_USERNAME, Message: "invalid username"}}, err
+	}
+	password, err := parsePassword(createUserRequest.GetPassword())
+	if err != nil {
+		log.Printf("Failed to parse password: %v\n", err)
+		return &authenticator.CreateUserResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_PASSWORD, Message: "invalid password"}}, err
+	}
 
 	// Hash password
 	hashedSaltedPassword, err := hashSaltPassword(password)
@@ -81,8 +91,16 @@ func (authenticationController *AuthenticationController) RegisterUser(ctx conte
 // CreateSession creates a new session
 func (authenticationController *AuthenticationController) CreateSession(ctx context.Context, createSessionRequest *authenticator.CreateSessionRequest) (*authenticator.CreateSessionResponse, error) {
 	// Parse request
-	username := createSessionRequest.GetUsername()
-	password := createSessionRequest.GetPassword()
+	username, err := parseUsername(createSessionRequest.GetUsername())
+	if err != nil {
+		log.Printf("Failed to parse username: %v\n", err)
+		return &authenticator.CreateSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_USERNAME, Message: "invalid username"}}, err
+	}
+	password, err := parsePassword(createSessionRequest.GetPassword())
+	if err != nil {
+		log.Printf("Failed to parse password: %v\n", err)
+		return &authenticator.CreateSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_PASSWORD, Message: "invalid password"}}, err
+	}
 
 	// Get user
 	user, err := authenticationController.userRepo.GetUserByUsername(ctx, username)
@@ -99,7 +117,7 @@ func (authenticationController *AuthenticationController) CreateSession(ctx cont
 	}
 
 	// Create session
-	userSession := &authenticator.UserSession{Id: user.GetId()}
+	userSession := &authenticator.UserSession{Id: user.GetId(), Username: username}
 	expTimeInMinutes := 60 * 24 //TODO: Move to env
 	sessionID, err := authenticationController.sessionStore.CreateSession(ctx, userSession, expTimeInMinutes)
 	if err != nil {
@@ -143,6 +161,42 @@ func (authenticationController *AuthenticationController) DeleteSession(ctx cont
 
 	log.Printf("Session %s deleted successfully\n", sessionID)
 	return &authenticator.DeleteSessionResponse{Error: nil}, nil
+}
+
+func parseUsername(username string) (string, error) {
+	// Checks for
+	// 1. no spaces
+	// 2. Alphanum + . only
+	// 3. Change to lowercase
+	// 4. 4 to 60 characters only
+
+	isAlphanumeric := func(s string) bool {
+		for _, r := range s {
+			if !unicode.IsLetter(r) && !unicode.IsNumber(r) && r != '.' {
+				return false
+			}
+		}
+		return true
+	}
+
+	if len(username) < 4 || len(username) > 60 {
+		return "", fmt.Errorf("username must be between 4 and 60 characters")
+	}
+
+	if !isAlphanumeric(username) {
+		return "", fmt.Errorf("username can only contain alphanumeric characters and periods")
+	}
+
+	return strings.ToLower(username), nil
+}
+
+func parsePassword(password string) (string, error) {
+	// between 4 and 71 characters
+	if len(password) < 4 || len(password) > 71 {
+		return "", fmt.Errorf("password must be between 8 and 71 characters")
+	}
+
+	return password, nil
 }
 
 
