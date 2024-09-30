@@ -1,11 +1,20 @@
 from concurrent import futures
 import time
+import sys
+import os
+# import relative to cwd/src for generated proto files
+cwd = os.getcwd()
+src_path = os.path.join(cwd, 'src')
+sys.path.append(src_path)
+
 from src.protos import job_pb2, job_pb2_grpc
 import grpc
 
+
 class GreeterServicer(job_pb2_grpc.JobServiceServicer):
     def ProcessJob(self, request, context):
-        return job_pb2.ProcessJobResponse()
+        print("Received job request")
+        return job_pb2.ProcessJobResponse(message="hello")
 def serve():
     server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
     job_pb2_grpc.add_JobServiceServicer_to_server(GreeterServicer(), server)

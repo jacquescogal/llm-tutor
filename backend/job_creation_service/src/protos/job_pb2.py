@@ -24,7 +24,7 @@ _sym_db = _symbol_database.Default()
 
 
 
-DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10protos/job.proto\"#\n\x11ProcessJobRequest\x12\x0e\n\x06job_id\x18\x01 \x01(\t\"\x14\n\x12ProcessJobResponse2C\n\nJobService\x12\x35\n\nProcessJob\x12\x12.ProcessJobRequest\x1a\x13.ProcessJobResponseb\x06proto3')
+DESCRIPTOR = _descriptor_pool.Default().AddSerializedFile(b'\n\x10protos/job.proto\"#\n\x11ProcessJobRequest\x12\x0e\n\x06job_id\x18\x01 \x01(\r\"%\n\x12ProcessJobResponse\x12\x0f\n\x07message\x18\x01 \x01(\t2C\n\nJobService\x12\x35\n\nProcessJob\x12\x12.ProcessJobRequest\x1a\x13.ProcessJobResponseb\x06proto3')
 
 _globals = globals()
 _builder.BuildMessageAndEnumDescriptors(DESCRIPTOR, _globals)
@@ -34,7 +34,7 @@ if not _descriptor._USE_C_DESCRIPTORS:
   _globals['_PROCESSJOBREQUEST']._serialized_start=20
   _globals['_PROCESSJOBREQUEST']._serialized_end=55
   _globals['_PROCESSJOBRESPONSE']._serialized_start=57
-  _globals['_PROCESSJOBRESPONSE']._serialized_end=77
-  _globals['_JOBSERVICE']._serialized_start=79
-  _globals['_JOBSERVICE']._serialized_end=146
+  _globals['_PROCESSJOBRESPONSE']._serialized_end=94
+  _globals['_JOBSERVICE']._serialized_start=96
+  _globals['_JOBSERVICE']._serialized_end=163
 # @@protoc_insertion_point(module_scope)

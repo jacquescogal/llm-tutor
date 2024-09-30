@@ -7,8 +7,9 @@ service JobService {
   rpc ProcessJob(ProcessJobRequest) returns (ProcessJobResponse);
 }
 message ProcessJobRequest {
-  string job_id = 1;
+    uint32 job_id = 1;
 }
 
 message ProcessJobResponse {
+    string message = 1;
 }

@@ -11,6 +11,8 @@ import (
 	"unicode"
 
 	"golang.org/x/crypto/bcrypt"
+	"google.golang.org/grpc/codes"
+	"google.golang.org/grpc/status"
 )
 
 // AuthenticationController represents the controller for managing authentication
@@ -37,19 +39,19 @@ func (authenticationController *AuthenticationController) RegisterUser(ctx conte
 	username, err := parseUsername(createUserRequest.GetUsername())
 	if err != nil {
 		log.Printf("Failed to parse username: %v\n", err)
-		return &authenticator.CreateUserResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_USERNAME, Message: "invalid username"}}, err
+		return nil, status.Error(codes.InvalidArgument, "invalid username")
 	}
 	password, err := parsePassword(createUserRequest.GetPassword())
 	if err != nil {
 		log.Printf("Failed to parse password: %v\n", err)
-		return &authenticator.CreateUserResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_PASSWORD, Message: "invalid password"}}, err
+		return nil, status.Error(codes.InvalidArgument, "invalid password")
 	}
 
 	// Hash password
 	hashedSaltedPassword, err := hashSaltPassword(password)
 	if err != nil {
 		log.Printf("Failed to hash password: %v\n", err)
-		return &authenticator.CreateUserResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_PASSWORD, Message: "failed to hash password"}}, err
+		return nil, status.Error(codes.Internal, "failed to hash password")
 	}
 
 	maxWaitTime := 2
@@ -58,14 +60,12 @@ func (authenticationController *AuthenticationController) RegisterUser(ctx conte
 	uniqueID, err := authenticationController.lock.AcquireLock(ctx, username, expTime, maxWaitTime)
 	if err != nil {
 		log.Printf("Failed to acquire lock for user %s: %v\n", username, err)
-		return &authenticator.CreateUserResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_FAILED_TO_ACQUIRE_LOCK, Message: "failed to acquire lock"}}, err
+		return nil, status.Error(codes.ResourceExhausted, "failed to acquire lock")
 	}else{
 		defer func() {
 			// Release lock
-			err := authenticationController.lock.ReleaseLock(ctx, username, uniqueID)
-			if err != nil {
-				log.Println(err.Error())
-			}
+			_ = authenticationController.lock.ReleaseLock(ctx, username, uniqueID)
+			// if error, then lock only released after expiration of 5(expTime) seconds
 		}()
 	}
 
@@ -74,18 +74,18 @@ func (authenticationController *AuthenticationController) RegisterUser(ctx conte
 	if err == nil {
 		// User already exists
 		log.Printf("User %s already exists\n", username)
-		return &authenticator.CreateUserResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_USER_ALREADY_EXISTS, Message: "user already exists"}}, fmt.Errorf("user already exists")
+		return nil, status.Error(codes.AlreadyExists, "user already exists")
 	}
 
 	// Create user
 	err = authenticationController.userRepo.CreateUser(ctx, username, hashedSaltedPassword)
 	if err != nil {
 		log.Printf("Failed to create user %s: %v\n", username, err)
-		return &authenticator.CreateUserResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_FAILED_TO_CREATE_USER, Message: "failed to create user"}}, err
+		return nil, status.Error(codes.Internal, "failed to create user")
 	}
 
 	log.Printf("User %s created successfully\n", username)
-	return &authenticator.CreateUserResponse{Error: nil}, nil
+	return &authenticator.CreateUserResponse{}, nil
 }
 
 // CreateSession creates a new session
@@ -94,26 +94,26 @@ func (authenticationController *AuthenticationController) CreateSession(ctx cont
 	username, err := parseUsername(createSessionRequest.GetUsername())
 	if err != nil {
 		log.Printf("Failed to parse username: %v\n", err)
-		return &authenticator.CreateSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_USERNAME, Message: "invalid username"}}, err
+		return nil, status.Error(codes.InvalidArgument, "invalid username")
 	}
 	password, err := parsePassword(createSessionRequest.GetPassword())
 	if err != nil {
 		log.Printf("Failed to parse password: %v\n", err)
-		return &authenticator.CreateSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_PASSWORD, Message: "invalid password"}}, err
+		return nil, status.Error(codes.InvalidArgument, "invalid password")
 	}
 
 	// Get user
 	user, err := authenticationController.userRepo.GetUserByUsername(ctx, username)
 	if err != nil {
 		log.Printf("Failed to get user %s: %v\n", username, err)
-		return &authenticator.CreateSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_USER_NOT_FOUND, Message: "user not found"}}, err
+		return nil, status.Error(codes.NotFound, "user not found")
 	}
 
 	// Compare password
 	err = compareHashAndPassword(user.GetHashSaltPassword(), password)
 	if err != nil {
 		log.Printf("Failed to authenticate user %s: %v\n", username, err)
-		return &authenticator.CreateSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_PASSWORD, Message: "invalid password"}}, err
+		return nil, status.Error(codes.Unauthenticated, "failed to authenticate user")
 	}
 
 	// Create session
@@ -122,11 +122,11 @@ func (authenticationController *AuthenticationController) CreateSession(ctx cont
 	sessionID, err := authenticationController.sessionStore.CreateSession(ctx, userSession, expTimeInMinutes)
 	if err != nil {
 		log.Printf("Failed to create session for user %s: %v\n", username, err)
-		return &authenticator.CreateSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_FAILED_TO_CREATE_SESSION, Message: "failed to create session"}}, err
+		return nil, status.Error(codes.Internal, "failed to create session")
 	}
 
 	log.Printf("Session %s created successfully for user %s\n", sessionID, username)
-	return &authenticator.CreateSessionResponse{SessionId: sessionID, Error: nil}, nil
+	return &authenticator.CreateSessionResponse{SessionId: sessionID}, nil
 }
 
 
@@ -140,11 +140,11 @@ func (authenticationController *AuthenticationController) AuthenticateSession(ct
 	userSession, err := authenticationController.sessionStore.GetSession(ctx, sessionID)
 	if err != nil {
 		log.Printf("Failed to get session %s: %v\n", sessionID, err)
-		return &authenticator.AuthenticateSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_SESSION_NOT_FOUND, Message: "session not found"}}, err
+		return nil, status.Error(codes.NotFound, "session not found")
 	}
 
 	log.Printf("Session %s authenticated successfully\n", sessionID)
-	return &authenticator.AuthenticateSessionResponse{UserSession: userSession, Error: nil}, nil
+	return &authenticator.AuthenticateSessionResponse{UserSession: userSession}, nil
 }
 
 // DeleteSession deletes a session
@@ -156,11 +156,11 @@ func (authenticationController *AuthenticationController) DeleteSession(ctx cont
 	err := authenticationController.sessionStore.DeleteSession(ctx, sessionID)
 	if err != nil {
 		log.Printf("Failed to delete session %s: %v\n", sessionID, err)
-		return &authenticator.DeleteSessionResponse{Error: &authenticator.Error{Code: authenticator.ErrorCode_INVALID_SESSION, Message: "failed to delete session"}}, err
+		return nil, status.Error(codes.Internal, "failed to delete session")
 	}
 
 	log.Printf("Session %s deleted successfully\n", sessionID)
-	return &authenticator.DeleteSessionResponse{Error: nil}, nil
+	return &authenticator.DeleteSessionResponse{}, nil
 }
 
 func parseUsername(username string) (string, error) {

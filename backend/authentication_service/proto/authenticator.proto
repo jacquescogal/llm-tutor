@@ -11,36 +11,12 @@ service UserService {
   rpc DeleteSession (DeleteSessionRequest) returns (DeleteSessionResponse);
 }
 
-enum ErrorCode {
-  OK = 0;
-  USER_ALREADY_EXISTS = 1;
-  INVALID_SESSION = 2;
-  USER_NOT_FOUND = 3;
-  INVALID_CREDENTIALS = 4;
-  INTERNAL_ERROR = 5;
-  SESSION_NOT_FOUND = 6;
-  SESSION_EXPIRED = 7;
-  INVALID_SESSION_ID = 8;
-  INVALID_USERNAME = 9;
-  INVALID_PASSWORD = 10;
-  FAILED_TO_ACQUIRE_LOCK = 11;
-  FAILED_TO_CREATE_USER = 12;
-  FAILED_TO_CREATE_SESSION = 13;
-}
-
-
-message Error {
-  ErrorCode code = 1;
-  string message = 2;
-}
-
 message CreateUserRequest {
   string username = 1;
   string password = 2;
 }
 
 message CreateUserResponse {
-  Error error = 1;
 }
 
 message AuthenticateSessionRequest {
@@ -49,7 +25,6 @@ message AuthenticateSessionRequest {
 
 message AuthenticateSessionResponse {
   UserSession user_session = 1;
-  Error error = 2;
 }
 
 message CreateSessionRequest {
@@ -59,7 +34,6 @@ message CreateSessionRequest {
 
 message CreateSessionResponse {
   string session_id = 1;
-  Error error = 2;
 }
 
 message DeleteSessionRequest {
@@ -67,7 +41,6 @@ message DeleteSessionRequest {
 }
 
 message DeleteSessionResponse {
-  Error error = 1;
 }
 
 message DBUser {
