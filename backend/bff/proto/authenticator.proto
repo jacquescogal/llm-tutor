@@ -44,12 +44,12 @@ message DeleteSessionResponse {
 }
 
 message DBUser {
-  int32 id = 1;
+  uint64 user_id = 1;
   string username = 2;
   string hash_salt_password = 3;
 }
 
 message UserSession {
-  int32 id = 1;
+  uint64 user_id = 1;
   string username = 2;
 }

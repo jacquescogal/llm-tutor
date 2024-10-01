@@ -117,7 +117,7 @@ func (authenticationController *AuthenticationController) CreateSession(ctx cont
 	}
 
 	// Create session
-	userSession := &authenticator.UserSession{Id: user.GetId(), Username: username}
+	userSession := &authenticator.UserSession{UserId: user.GetUserId(), Username: username}
 	expTimeInMinutes := 60 * 24 //TODO: Move to env
 	sessionID, err := authenticationController.sessionStore.CreateSession(ctx, userSession, expTimeInMinutes)
 	if err != nil {

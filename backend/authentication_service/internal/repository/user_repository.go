@@ -40,7 +40,7 @@ func (userRepository *UserRepository) GetUserByUsername(ctx context.Context, use
 	row := userRepository.db.QueryRowContext(ctx, query, username)
 
 	var user authenticator.DBUser
-	err := row.Scan(&user.Id, &user.Username, &user.HashSaltPassword)
+	err := row.Scan(&user.UserId, &user.Username, &user.HashSaltPassword)
 	if err != nil {
 		log.Printf("Failed to retrieve user: %v\n", err)
 		return nil, err

@@ -1,0 +1,55 @@
+// authenticator.proto
+
+syntax = "proto3";
+
+option go_package = "internal/proto/authenticator";
+
+service UserService {
+  rpc CreateUser (CreateUserRequest) returns (CreateUserResponse);
+  rpc AuthenticateSession (AuthenticateSessionRequest) returns (AuthenticateSessionResponse);
+  rpc CreateSession (CreateSessionRequest) returns (CreateSessionResponse);
+  rpc DeleteSession (DeleteSessionRequest) returns (DeleteSessionResponse);
+}
+
+message CreateUserRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message CreateUserResponse {
+}
+
+message AuthenticateSessionRequest {
+  string session_id = 1;
+}
+
+message AuthenticateSessionResponse {
+  UserSession user_session = 1;
+}
+
+message CreateSessionRequest {
+  string username = 1;
+  string password = 2;
+}
+
+message CreateSessionResponse {
+  string session_id = 1;
+}
+
+message DeleteSessionRequest {
+  string session_id = 1;
+}
+
+message DeleteSessionResponse {
+}
+
+message DBUser {
+  uint64 user_id = 1;
+  string username = 2;
+  string hash_salt_password = 3;
+}
+
+message UserSession {
+  uint64 user_id = 1;
+  string username = 2;
+}

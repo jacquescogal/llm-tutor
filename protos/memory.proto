@@ -1,0 +1,461 @@
+// memory.proto
+
+syntax = "proto3";
+
+option go_package = "internal/proto/subject";
+
+enum MemberRole {
+  MEMBER_ROLE_UNDEFINED = 0;
+  MEMBER_ROLE_ADMIN = 1;
+  MEMBER_ROLE_VIEWER= 2;
+  MEMBER_ROLE_EDITOR = 3;
+}
+
+enum UploadStatus {
+  UPLOAD_STATUS_NOT_STARTED = 0;
+  UPLOAD_STATUS_SUCCESS = 1;
+  UPLOAD_STATUS_FAILED = 2;
+  UPLOAD_STATUS_UPLOADING = 3;
+  UPLOAD_STATUS_PENDING_APPROVAL = 4;
+  UPLOAD_STATUS_INSERTING = 5;
+}
+
+enum QuestionType {
+  QUESTION_TYPE_UNDEFINED = 0;
+  QUESTION_TYPE_MCQ = 1;
+  QUESTION_TYPE_MULTI_ANSWER_MCQ= 2;
+  QUESTION_TYPE_SHORT_ANSWER = 3;
+  QUESTION_TYPE_LONG_ANSWER = 4;
+}
+
+service SubjectService {
+  rpc CreateSubject (CreateSubjectRequest) returns (CreateSubjectResponse);
+  rpc GetSubjectById (GetSubjectByIdRequest) returns (GetSubjectByIdResponse);
+  rpc GetSubjectsByUserId (GetSubjectsByUserIdRequest) returns (GetSubjectsByUserIdResponse);
+  rpc GetSubjectsByNameSearch (GetSubjectsByNameSearchRequest) returns (GetSubjectsByNameSearchResponse);
+  rpc UpdateSubject (UpdateSubjectRequest) returns (UpdateSubjectResponse);
+  rpc DeleteSubject (DeleteSubjectRequest) returns (DeleteSubjectResponse);
+}
+
+service TopicService {
+  rpc CreateTopic (CreateTopicRequest) returns (CreateTopicResponse);
+  rpc GetTopicById (GetTopicByIdRequest) returns (GetTopicByIdResponse);
+  rpc GetTopicsBySubjectId (GetTopicsBySubjectIdRequest) returns (GetTopicsBySubjectIdResponse);
+  rpc GetTopicsByNameSearch (GetTopicsByNameSearchRequest) returns (GetTopicsByNameSearchResponse);
+  rpc UpdateTopic (UpdateTopicRequest) returns (UpdateTopicResponse);
+  rpc DeleteTopic (DeleteTopicRequest) returns (DeleteTopicResponse);
+}
+
+service DocService {
+  rpc CreateDoc (CreateDocRequest) returns (CreateDocResponse);
+  rpc GetDocById (GetDocByIdRequest) returns (GetDocByIdResponse);
+  rpc GetDocsByTopicId (GetDocsByTopicIdRequest) returns (GetDocsByTopicIdResponse);
+  rpc GetDocsByNameSearch (GetDocsByNameSearchRequest) returns (GetDocsByNameSearchResponse);
+  rpc UpdateDoc (UpdateDocRequest) returns (UpdateDocResponse);
+  rpc DeleteDoc (DeleteDocRequest) returns (DeleteDocResponse);
+}
+
+service MemoryService {
+  rpc CreateMemory (CreateMemoryRequest) returns (CreateMemoryResponse);
+  rpc GetMemoryById (GetMemoryByIdRequest) returns (GetMemoryByIdResponse);
+  rpc GetMemoriesByDocId (GetMemoriesByDocIdRequest) returns (GetMemoriesByDocIdResponse);
+  rpc GetMemoriesByMemoryTitleSearch (GetMemoriesByMemoryTitleSearchRequest) returns (GetMemoriesByMemoryTitleSearchResponse);
+  rpc UpdateMemory (UpdateMemoryRequest) returns (UpdateMemoryResponse);
+  rpc DeleteMemory (DeleteMemoryRequest) returns (DeleteMemoryResponse);
+}
+
+service QuestionService {
+  rpc CreateQuestion (CreateQuestionRequest) returns (CreateQuestionResponse);
+  rpc GetQuestionById (GetQuestionByIdRequest) returns (GetQuestionByIdResponse);
+  rpc GetQuestionsByDocId (GetQuestionsByDocIdRequest) returns (GetQuestionsByDocIdResponse);
+  rpc GetQuestionsByQuestionTitleSearch (GetQuestionsByQuestionTitleSearchRequest) returns (GetQuestionsByQuestionTitleSearchResponse);
+  rpc UpdateQuestion (UpdateQuestionRequest) returns (UpdateQuestionResponse);
+  rpc DeleteQuestion (DeleteQuestionRequest) returns (DeleteQuestionResponse);
+}
+
+// Common Type
+message MemberAccess {
+  uint64 user_id = 1;
+  uint64 subject_id = 2;
+}
+
+// SubjectService
+message CreateSubjectRequest {
+  uint64 user_id = 1; // This is the user_id of the user who is creating the subject
+  string subject_name = 2;
+  string subject_description = 3;
+  bool is_public = 4;
+}
+
+message CreateSubjectResponse {
+}
+
+message GetSubjectByIdRequest {
+  uint64 user_id = 1;
+  uint64 subject_id = 2;
+}
+
+message GetSubjectByIdResponse {
+  DBSubject subject = 1;
+}
+
+message GetSubjectsByUserIdRequest {
+  uint64 user_id = 1;
+  uint32 page_number = 2;
+  uint32 page_size = 3;
+}
+
+message GetSubjectsByUserIdResponse {
+  repeated DBSubject subjects = 1;
+}
+
+message GetSubjectsByNameSearchRequest {
+  uint64 user_id = 1;
+  string search_query = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+}
+
+message GetSubjectsByNameSearchResponse {
+  repeated DBSubject subjects = 1;
+}
+
+message UpdateSubjectRequest {
+  uint64 user_id = 1;
+  uint64 subject_id = 2;
+  string subject_name = 3;
+  string subject_description = 4;
+  bool is_public = 5;
+}
+
+message UpdateSubjectResponse {
+}
+
+message DeleteSubjectRequest {
+  uint64 user_id = 1;
+  uint64 subject_id = 2;
+}
+
+message DeleteSubjectResponse {
+}
+
+// TopicService
+message CreateTopicRequest {
+  MemberAccess member_access = 1;
+  string topic_name = 2;
+  string topic_summary = 3;
+}
+
+message CreateTopicResponse {
+}
+
+message GetTopicByIdRequest {
+  MemberAccess member_access = 1;
+  uint64 topic_id = 2;
+}
+
+message GetTopicByIdResponse {
+  DBTopic topic = 1;
+}
+
+message GetTopicsBySubjectIdRequest {
+  MemberAccess member_access = 1;
+  uint32 page_number = 2;
+  uint32 page_size = 3;
+}
+
+message GetTopicsBySubjectIdResponse {
+  repeated DBTopic topics = 1;
+}
+
+message GetTopicsByNameSearchRequest {
+  MemberAccess member_access = 1;
+  string search_query = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+}
+
+message GetTopicsByNameSearchResponse {
+  repeated DBTopic topics = 1;
+}
+
+message UpdateTopicRequest {
+  MemberAccess member_access = 1;
+  uint64 topic_id = 2;
+  string topic_name = 3;
+  string topic_summary = 4;
+}
+
+message UpdateTopicResponse {
+}
+
+message DeleteTopicRequest {
+  MemberAccess member_access = 1;
+  uint64 topic_id = 2;
+}
+
+message DeleteTopicResponse {
+}
+
+// DocService
+message CreateDocRequest {
+  MemberAccess member_access = 1;
+  uint64 topic_id = 2;
+  string doc_title = 3;
+  string doc_summary = 4;
+  UploadStatus upload_status = 5;
+  string s3_object_key = 6;
+}
+
+message CreateDocResponse {
+}
+
+message GetDocByIdRequest {
+  MemberAccess member_access = 1;
+  uint64 doc_id = 2;
+}
+
+message GetDocByIdResponse {
+  DBDoc doc = 1;
+}
+
+message GetDocsByTopicIdRequest {
+  MemberAccess member_access = 1;
+  uint64 topic_id = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+}
+
+message GetDocsByTopicIdResponse {
+  repeated DBDoc docs = 1;
+}
+
+message GetDocsByNameSearchRequest {
+  MemberAccess member_access = 1;
+  string search_query = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+}
+
+message GetDocsByNameSearchResponse {
+  repeated DBDoc docs = 1;
+}
+
+message UpdateDocRequest {
+  MemberAccess member_access = 1;
+  uint64 doc_id = 2;
+  string doc_title = 3;
+  string doc_summary = 4;
+  UploadStatus upload_status = 5;
+  string s3_object_key = 6;
+}
+
+message UpdateDocResponse {
+}
+
+message DeleteDocRequest {
+  MemberAccess member_access = 1;
+  uint64 doc_id = 2;
+}
+
+message DeleteDocResponse {
+}
+
+// MemoryService
+message CreateMemoryRequest {
+  MemberAccess member_access = 1;
+  uint64 doc_id = 2;
+  string memory_title = 3;
+  string memory_content = 4;
+}
+
+message CreateMemoryResponse {
+}
+
+message GetMemoryByIdRequest {
+  MemberAccess member_access = 1;
+  uint64 memory_id = 2;
+}
+
+message GetMemoryByIdResponse {
+  DBMemory memory = 1;
+}
+
+message GetMemoriesByDocIdRequest {
+  MemberAccess member_access = 1;
+  uint64 doc_id = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+}
+
+message GetMemoriesByDocIdResponse {
+  repeated DBMemory memories = 1;
+}
+
+message GetMemoriesByMemoryTitleSearchRequest {
+  MemberAccess member_access = 1;
+  string search_query = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+}
+
+message GetMemoriesByMemoryTitleSearchResponse {
+  repeated DBMemory memories = 1;
+}
+
+message UpdateMemoryRequest {
+  MemberAccess member_access = 1;
+  uint64 memory_id = 2;
+  string memory_title = 3;
+  string memory_content = 4;
+}
+
+message UpdateMemoryResponse {
+}
+
+message DeleteMemoryRequest {
+  MemberAccess member_access = 1;
+  uint64 memory_id = 2;
+}
+
+message DeleteMemoryResponse {
+}
+
+// QuestionService
+message CreateQuestionRequest {
+  MemberAccess member_access = 1;
+  uint64 doc_id = 2;
+  string question_title = 3;
+  bytes question_blob = 4;
+  QuestionType question_type = 5;
+}
+
+message CreateQuestionResponse {
+}
+
+message GetQuestionByIdRequest {
+  MemberAccess member_access = 1;
+  uint64 question_id = 2;
+}
+
+message GetQuestionByIdResponse {
+  DBQuestion question = 1;
+}
+
+message GetQuestionsByDocIdRequest {
+  MemberAccess member_access = 1;
+  uint64 doc_id = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+}
+
+message GetQuestionsByDocIdResponse {
+  repeated DBQuestion questions = 1;
+}
+
+message GetQuestionsByQuestionTitleSearchRequest {
+  MemberAccess member_access = 1;
+  string search_query = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+}
+
+message GetQuestionsByQuestionTitleSearchResponse {
+  repeated DBQuestion questions = 1;
+}
+
+message UpdateQuestionRequest {
+  MemberAccess member_access = 1;
+  uint64 question_id = 2;
+  string question_title = 3;
+  bytes question_blob = 4;
+  QuestionType question_type = 5;
+}
+
+message UpdateQuestionResponse {
+}
+
+message DeleteQuestionRequest {
+  MemberAccess member_access = 1;
+  uint64 question_id = 2;
+}
+
+message DeleteQuestionResponse {
+}
+
+
+// DB Models
+message DBMemberAccess {
+  uint64 user_id = 1;
+  uint64 subject_id = 2;
+  MemberRole member_role = 3;
+}
+
+message DBSubject {
+  uint64 subject_id = 1;
+  string subject_name = 2;
+  string subject_description = 3;
+  bool is_public = 4;
+  uint64 created_time = 5;
+  uint64 updated_time = 6;
+}
+
+message DBSubjectTopicMembership {
+  uint64 subject_id = 1;
+  uint64 topic_id = 2;
+  bool is_master_topic = 3;
+}
+
+
+message DBTopic {
+  uint64 topic_id = 1;
+  string topic_name = 2;
+  string topic_summary = 3;
+  uint64 created_time = 4;
+  uint64 updated_time = 5;
+}
+
+message DBDoc {
+  uint64 doc_id = 1;
+  uint64 topic_id = 2;
+  string doc_title = 3;
+  string doc_summary = 4;
+  UploadStatus upload_status = 5;
+  string s3_object_key = 6;
+  uint64 created_time = 7;
+  uint64 updated_time = 8;
+}
+
+message DBMemory {
+  uint64 memory_id = 1;
+  uint64 doc_id = 2;
+  string memory_title = 3;
+  string memory_content = 4;
+  uint64 created_time = 5;
+  uint64 updated_time = 6;
+}
+
+message DBQuestion {
+  uint64 question_id = 1;
+  uint64 doc_id = 2;
+  string question_title = 3;
+  bytes question_blob = 4;
+  QuestionType question_type = 5;
+  uint64 created_time = 6;
+  uint64 updated_time = 7;
+}
+
+
+// Question Types
+message MCQChoice {
+  string choice = 1;
+  bool is_correct = 2;
+}
+
+message MCQQuestion {
+  repeated MCQChoice choices = 2;
+}
+
+message TextInputQuestion {
+  string answer = 2;
+}
