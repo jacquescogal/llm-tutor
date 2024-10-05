@@ -1,6 +1,6 @@
 import React from "react"
 
-const Card = (props: {
+const MemoryCard = (props: {
     title: string,
     body: string,
     buttons: React.ReactNode[],
@@ -9,7 +9,8 @@ const Card = (props: {
     <div className="
     h-64 w-96 
     flex flex-col 
-    bg-white 
+    bg-base-100
+    text-base-content
     relative 
     border border-2 border-black
     text-left
@@ -18,13 +19,17 @@ const Card = (props: {
     overflow-hidden
     text-ellipsis
     ">
-        <h1 className="text-black truncate h-10">{props.body}</h1>
+        <h1 className="truncate h-10">{props.body}</h1>
         <span className="text-wrap break-words h-36 overflow-scroll bg-slate-50 shadow-inner">{props.body}</span>
         <div className="absolute bottom-0 right-0 p-2 flex flex-row h-16">
-        {props.buttons}
+        {props.buttons.map((button, index) => (
+            <div key={index} >
+                {button}
+            </div>
+        ))}
         </div>
     </div>
   )
 }
 
-export default Card
+export default MemoryCard
