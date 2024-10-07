@@ -1,19 +1,49 @@
 import React from "react";
+import {
+  createSession,
+  createUser,
+} from "../../api/authService";
+import { useNavigate } from "react-router-dom";
 
-type Props = {
-  username: string;
-  password: string;
-  setUsername: React.Dispatch<React.SetStateAction<string>>;
-  setPassword: React.Dispatch<React.SetStateAction<string>>;
-  error: string;
-  setError: React.Dispatch<React.SetStateAction<string>>;
-};
+const LoginCard = () => {
+  const [username, setUsername] = React.useState("");
+  const [password, setPassword] = React.useState("");
+  const [error, setError] = React.useState("");
+  const nav = useNavigate();
 
-const LoginCard = (props: Props) => {
+  const onLoginClick = async () => {
+    try {
+      await createSession({ username, password });
+
+      // Store username in local storage for 
+      localStorage.setItem('username', username);
+      nav("/dashboard/explore/subject");
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError("An unknown error occurred");
+      }
+    }
+  };
+
+  const onRegisterClick = async () => {
+    try {
+      await createUser({ username, password });
+      nav("/dashboard/explore/subject");
+    } catch (e) {
+      if (e instanceof Error) {
+        setError(e.message);
+      } else {
+        setError("An unknown error occurred");
+      }
+    }
+  };
+
   return (
     <div
       className="
-    h-64 w-96 
+    h-fit w-96 
     flex flex-col 
     bg-base-100 
     text-base-content
@@ -26,34 +56,48 @@ const LoginCard = (props: Props) => {
     text-ellipsis
     "
     >
-      <h1 className="truncate h-10">Login</h1>
+      <h1 className="truncate h-fit">Login</h1>
       <form
         className="flex flex-col"
         onSubmit={(e) => {
           e.preventDefault();
-          console.log("submit");
         }}
       >
         <label>Username</label>
         <input
           className="text-wrap break-words h-8 overflow-scroll bg-slate-50 shadow-inner p-1"
-          onChange={(e) => props.setUsername(e.target.value)}
-          value={props.username}
+          onChange={(e) => setUsername(e.target.value)}
+          value={username}
         />
         <label>Password</label>
         <input
           className="text-wrap break-words h-8 overflow-scroll bg-slate-50 shadow-inner p-1 mb-1"
-          onChange={(e) => props.setPassword(e.target.value)}
-          value={props.password}
-          
+          onChange={(e) => setPassword(e.target.value)}
+          value={password}
+          type="password"
         />
-        {props.error && <span className="normal-case rounded-badge bg-error text-error-content truncate p-1">{props.error}</span>}
-        <div className="absolute bottom-0 right-0 p-2 flex flex-row h-16 w-fit">
-          <button className="mr-1" type="submit"
-          onClick={()=>{props.setError(e=>e+'lol')}}>
+        {error && (
+          <span className="normal-case rounded-badge bg-error text-error-content truncate p-1">
+            {error}
+          </span>
+        )}
+        <div className="p-2 flex flex-row h-16 w-fit justify-end w-full">
+          <button
+            className="mr-1"
+            type="submit"
+            onClick={(e) => {
+              e.preventDefault();
+              onLoginClick();
+            }}
+          >
             Login
           </button>
-          <button type="submit">Register</button>
+          <button
+          onClick={(e) => {
+            e.preventDefault();
+            onRegisterClick();
+          }}
+          type="submit">Register</button>
         </div>
       </form>
     </div>

@@ -1,7 +1,6 @@
 package controllers
 
 import (
-	auth "bff/internal/proto/authenticator"
 	"bff/internal/services"
 	"fmt"
 
@@ -19,19 +18,20 @@ func NewAuthenticationController(authenticationService *services.AuthenticationS
 }
 
 func (c *AuthenticationController) CreateUser(ctx *gin.Context) error {
-    var request auth.CreateUserRequest
-    if err := ctx.ShouldBindJSON(&request); err != nil {
-        return err
+    username, password, ok := ctx.Request.BasicAuth()
+    if !ok {
+        return fmt.Errorf("basic auth header not found")
     }
-    return c.authService.CreateUser(request.Username, request.Password)
+    return c.authService.CreateUser(username, password)
 }
 
 func (c *AuthenticationController) CreateSession(ctx *gin.Context) (string, error) {
-    var request auth.CreateSessionRequest
-    if err := ctx.ShouldBindJSON(&request); err != nil {
-        return "", err
+    // check the basic auth header for username and password
+    username, password, ok := ctx.Request.BasicAuth()
+    if !ok {
+        return "", fmt.Errorf("basic auth header not found")
     }
-    return c.authService.CreateSession(request.Username, request.Password)
+    return c.authService.CreateSession(username, password)
 }
 
 func (c *AuthenticationController) DeleteSession(ctx *gin.Context) error {

@@ -19,8 +19,7 @@
 
   color-scheme: light dark;
   color: black;
-  background-color: #ccc5c5;
-
+  background-color: #f9f9f9;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
@@ -49,6 +48,10 @@ h1 {
   font-size: 2em;
   font-weight: bold;
   line-height: 1.1;
+}
+
+input{
+  @apply text-wrap break-words h-8 overflow-scroll bg-slate-50 shadow-inner p-1 mb-1;
 }
 
 button {

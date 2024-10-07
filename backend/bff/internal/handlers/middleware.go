@@ -27,7 +27,6 @@ func SessionMiddleware(authService *services.AuthenticationService) gin.HandlerF
         }
 
         c.Set("user_session", userSession)
-
         c.Next()
     }
 }

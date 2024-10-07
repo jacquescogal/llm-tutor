@@ -31,13 +31,14 @@ func (h *AuthenticationHandler) CreateUser(c *gin.Context) {
 
 func (h *AuthenticationHandler) CreateSession(c *gin.Context) {
     // Call the controller to handle CreateSession logic
+    // check the basic auth header for username and password
     sessionID, err := h.controller.CreateSession(c)
     if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return
     }
     // Set the session ID  as cookie
-    c.SetCookie("session_id", sessionID, 3600, "/", "localhost", false, true)
+    c.SetCookie("session_id", sessionID, 3600, "/", "", false, true)
     c.JSON(http.StatusOK, gin.H{"message": "Session created successfully"})
 }
 
@@ -45,7 +46,6 @@ func (h *AuthenticationHandler) DeleteSession(c *gin.Context) {
     // Call the controller to handle DeleteSession logic
     fmt.Println("DeleteSession")
     err := h.controller.DeleteSession(c)
-    fmt.Println("done")
     if err != nil {
         c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
         return

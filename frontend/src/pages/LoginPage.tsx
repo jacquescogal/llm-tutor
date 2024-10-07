@@ -1,21 +1,14 @@
 import React from 'react'
 import LoginCard from '../components/cards/LoginCard'
+import { CrumbHelperSetRootLink } from '../store/helpers/crumbHelper'
 
 
 const LoginPage = () => {
-    const [username, setUsername] = React.useState('')
-    const [password, setPassword] = React.useState('')
-    const [error, setError] = React.useState('')
+
+  CrumbHelperSetRootLink({name: "Login"});
   return (
-    <div>
-        <LoginCard
-        username={username}
-        password={password}
-        error={error}
-        setUsername={setUsername}
-        setPassword={setPassword}
-        setError={setError}
-        />
+    <div className='flex flex-col items-center h-full justify-center'>
+        <LoginCard/>
     </div>
   )
 }

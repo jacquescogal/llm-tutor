@@ -1,0 +1,54 @@
+// common.proto
+
+syntax = "proto3";
+package common;
+
+option go_package = "%replace%/internal/proto/common";
+
+
+enum UserSubjectRole {
+    USER_SUBJECT_ROLE_UNDEFINED = 0;
+    USER_SUBJECT_ROLE_OWNER = 1; // can give access to other users + editor rights
+    USER_SUBJECT_ROLE_ADMIN = 2; // can give access to other users + editor rights
+    USER_SUBJECT_ROLE_EDITOR = 3; // CRUD + viewer rights
+    USER_SUBJECT_ROLE_VIEWER = 4; // allows reads when subject is not public
+  }
+  
+  enum UserModuleRole {
+    USER_MODULE_ROLE_UNDEFINED = 0;
+    USER_MODULE_ROLE_OWNER = 1; // can give access to other users + editor rights
+    USER_MODULE_ROLE_ADMIN = 2; // can give access to other users + editor rights
+    USER_MODULE_ROLE_EDITOR = 3; // CRUD + viewer rights
+    USER_MODULE_ROLE_VIEWER = 4; // allows reads when doc is not public
+  }
+  
+  enum UploadStatus {
+    UPLOAD_STATUS_NOT_STARTED = 0;
+    UPLOAD_STATUS_SUCCESS = 1;
+    UPLOAD_STATUS_FAILED = 2;
+    UPLOAD_STATUS_UPLOADING = 3;
+    UPLOAD_STATUS_PENDING_APPROVAL = 4;
+    UPLOAD_STATUS_INSERTING = 5;
+  }
+  
+  enum QuestionType {
+    QUESTION_TYPE_UNDEFINED = 0;
+    QUESTION_TYPE_MCQ = 1;
+    QUESTION_TYPE_MULTI_ANSWER_MCQ= 2;
+    QUESTION_TYPE_SHORT_ANSWER = 3;
+    QUESTION_TYPE_LONG_ANSWER = 4;
+  }
+  
+  enum ORDER_BY_DIRECTION {
+    ORDER_BY_DIRECTION_UNDEFINED = 0;
+    ORDER_BY_DIRECTION_ASC = 1;
+    ORDER_BY_DIRECTION_DESC = 2;
+  }
+  
+  enum ORDER_BY_FIELD {
+    ORDER_BY_FIELD_UNDEFINED = 0;
+    ORDER_BY_FIELD_ID = 1;
+    ORDER_BY_FIELD_TITLE = 2;
+    ORDER_BY_FIELD_CREATED_TIME = 3;
+    ORDER_BY_FIELD_UPDATED_TIME = 4;
+  }

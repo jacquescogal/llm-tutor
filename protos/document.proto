@@ -1,0 +1,104 @@
+// document.proto
+
+syntax = "proto3";
+import "common.proto";
+package document;
+
+
+option go_package = "%replace%/internal/proto/document";
+
+
+service DocService {
+  rpc CreateDoc (CreateDocRequest) returns (CreateDocResponse);
+  rpc GetDocById (GetDocByIdRequest) returns (GetDocByIdResponse);
+  rpc GetDocsByModuleId (GetDocsByModuleIdRequest) returns (GetDocsByModuleIdResponse);
+  rpc GetDocsByNameSearch (GetDocsByNameSearchRequest) returns (GetDocsByNameSearchResponse);
+  rpc UpdateDoc (UpdateDocRequest) returns (UpdateDocResponse);
+  rpc DeleteDoc (DeleteDocRequest) returns (DeleteDocResponse);
+}
+
+
+// DocService
+message CreateDocRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    string doc_name = 3;
+    string doc_description = 4;
+    string doc_summary = 5;
+    common.UploadStatus upload_status = 6;
+    string s3_object_key = 7;
+  }
+  
+  message CreateDocResponse {
+  }
+  
+  message GetDocByIdRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+  }
+  
+  message GetDocByIdResponse {
+    DBDoc doc = 1;
+  }
+  
+  message GetDocsByModuleIdRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    uint32 page_number = 3;
+    uint32 page_size = 4;
+    common.ORDER_BY_FIELD order_by_field = 5;
+    common.ORDER_BY_DIRECTION order_by_direction = 6;
+  }
+  
+  message GetDocsByModuleIdResponse {
+    repeated DBDoc docs = 1;
+  }
+  
+  message GetDocsByNameSearchRequest {
+    uint64 user_id = 1;
+    string search_query = 2;
+    uint32 page_number = 3;
+    uint32 page_size = 4;
+    common.ORDER_BY_FIELD order_by_field = 5;
+    common.ORDER_BY_DIRECTION order_by_direction = 6;
+  }
+  
+  message GetDocsByNameSearchResponse {
+    repeated DBDoc docs = 1;
+  }
+  
+  message UpdateDocRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+    string doc_name = 3;
+    string doc_description = 4;
+    string doc_summary = 5;
+    common.UploadStatus upload_status = 6;
+    string s3_object_key = 7;
+  }
+  
+  message UpdateDocResponse {
+  }
+  
+  message DeleteDocRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+  }
+  
+  message DeleteDocResponse {
+  }
+
+
+// DB Models
+message DBDoc {
+    uint64 doc_id = 1;
+    uint64 module_id = 2;
+    string doc_name = 3;
+    string doc_description = 4;
+    string doc_summary = 5;
+    common.UploadStatus upload_status = 6;
+    string s3_object_key = 7;
+    uint64 created_time = 8;
+    uint64 updated_time = 9;
+  }
+  

@@ -1,14 +1,11 @@
 import React from "react";
+import { QuestionOption } from "../../../types/question";
 
-interface Option {
-  optionId: number;
-  optionBody: string;
-}
 
 type Props = {
   questionId: number;
   questionBody: string;
-  optionList: Option[];
+  optionList: QuestionOption[];
   selectedOption: number | undefined;
   setSelectedOption: (optionId: number) => void;
 };
