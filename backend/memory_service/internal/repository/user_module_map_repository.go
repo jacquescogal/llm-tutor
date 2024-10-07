@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log"
 	"memory_core/internal/cache"
-	mpb "memory_core/internal/proto/memory"
+	mpb "memory_core/internal/proto/module"
+	"memory_core/internal/proto/common"
 )
 
 type UserModuleMapRepository struct {
@@ -18,11 +19,11 @@ func NewUserModuleMapRepository(cacheStore *cache.CacheStore) *UserModuleMapRepo
 }
 
 // PutUserModuleMapping inserts a new user module mapping into user_module_map_tab or updates an existing one
-func (repo *UserModuleMapRepository) PutUserModuleMapping(ctx context.Context, tx *sql.Tx, userId, moduleId uint64, role mpb.UserModuleRole, isFavourite bool) error {
+func (repo *UserModuleMapRepository) PutUserModuleMapping(ctx context.Context, tx *sql.Tx, userId, moduleId uint64, role common.UserModuleRole, isFavourite bool) error {
 	// either one of user_module_role or is_favourite will be put
 	ifDuplicateString := "is_favourite = VALUES(is_favourite)"
 
-	if role != mpb.UserModuleRole_USER_MODULE_ROLE_UNDEFINED {
+	if role != common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED {
 		ifDuplicateString = "user_module_role = VALUES(user_module_role)"
 	}
 

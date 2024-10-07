@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"log"
 	"memory_core/internal/cache"
-	mpb "memory_core/internal/proto/memory"
+	mpb "memory_core/internal/proto/subject"
 )
 
 type SubjectModuleMapRepository struct {

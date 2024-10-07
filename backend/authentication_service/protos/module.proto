@@ -1,0 +1,106 @@
+// module.proto
+
+syntax = "proto3";
+import "common.proto";
+package module;
+
+
+option go_package = "authentication_service/internal/proto/module";
+
+
+
+service ModuleService {
+  rpc CreateModule (CreateModuleRequest) returns (CreateModuleResponse);
+  rpc GetModuleById (GetModuleByIdRequest) returns (GetModuleByIdResponse);
+  rpc GetModulesBySubjectId (GetModulesBySubjectIdRequest) returns (GetModulesBySubjectIdResponse);
+  rpc GetModulesByNameSearch (GetModulesByNameSearchRequest) returns (GetModulesByNameSearchResponse);
+  rpc UpdateModule (UpdateModuleRequest) returns (UpdateModuleResponse);
+  rpc DeleteModule (DeleteModuleRequest) returns (DeleteModuleResponse);
+}
+
+
+// ModuleService
+message CreateModuleRequest {
+    uint64 user_id = 1;
+    string module_name = 2;
+    string module_description = 3;
+    bool is_public = 4;
+  }
+  
+  message CreateModuleResponse {
+  }
+  
+  message GetModuleByIdRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+  }
+  
+  message GetModuleByIdResponse {
+    DBModule module = 1;
+  }
+  
+  message GetModulesBySubjectIdRequest {
+    uint64 user_id = 1;
+    uint64 subject_id = 2;
+    uint32 page_number = 3;
+    uint32 page_size = 4;
+    common.ORDER_BY_FIELD order_by_field = 5;
+    common.ORDER_BY_DIRECTION order_by_direction = 6;
+  }
+  
+  message GetModulesBySubjectIdResponse {
+    repeated DBModule modules = 1;
+  }
+  
+  message GetModulesByNameSearchRequest {
+    uint64 user_id = 1;
+    string search_query = 2;
+    uint32 page_number = 3;
+    uint32 page_size = 4;
+    common.ORDER_BY_FIELD order_by_field = 5;
+    common.ORDER_BY_DIRECTION order_by_direction = 6;
+  }
+  
+  message GetModulesByNameSearchResponse {
+    repeated DBModule modules = 1;
+  }
+  
+  message UpdateModuleRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    string module_name = 3;
+    string module_description = 4;
+    bool is_public = 5;
+  }
+  
+  message UpdateModuleResponse {
+  }
+  
+  message DeleteModuleRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+  }
+  
+  message DeleteModuleResponse {
+  }
+
+
+// DB Models
+
+message DBModule {
+    uint64 module_id = 1;
+    string module_name = 2;
+    string module_description = 3;
+    bool is_public = 4;
+    uint64 created_time = 5;
+    uint64 updated_time = 6;
+  }
+
+
+message DBUserModuleMap {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    common.UserModuleRole user_module_role = 3;
+    bool is_favourite = 4;
+  }
+  

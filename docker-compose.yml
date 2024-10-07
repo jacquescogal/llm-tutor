@@ -84,30 +84,30 @@ services:
   #     - mysql-memory
   #     - redis-auth
   #     - redis-memory
-  # go-auth:
-  #   build:
-  #     context: ./backend/authentication_service
-  #   container_name: go-auth
-  #   environment:
-  #     DB_USERNAME: "root"
-  #     DB_PASSWORD: "password"
-  #     DB_HOST: "mysql-auth"
-  #     DB_PORT: "3306"
-  #     DB_NAME: "user_db"
-  #     DB_MAX_OPEN_CONNS: "10"
-  #     DB_MAX_IDLE_CONNS: "10"
-  #     DB_MAX_CONN_LIFETIME_MIN: "30m"
-  #     REDIS_HOST: "redis-auth"
-  #     REDIS_PORT: "6379"
-  #   ports:
-  #     - "50051:50051"  # Expose port 50051
-  #   networks:
-  #     - backend
-  #   depends_on:
-  #     mysql-auth:
-  #       condition: service_healthy
-  #     redis-auth:
-  #       condition: service_started
+  go-auth:
+    build:
+      context: ./backend/authentication_service
+    container_name: go-auth
+    environment:
+      DB_USERNAME: "root"
+      DB_PASSWORD: "password"
+      DB_HOST: "mysql-auth"
+      DB_PORT: "3306"
+      DB_NAME: "user_db"
+      DB_MAX_OPEN_CONNS: "10"
+      DB_MAX_IDLE_CONNS: "10"
+      DB_MAX_CONN_LIFETIME_MIN: "30m"
+      REDIS_HOST: "redis-auth"
+      REDIS_PORT: "6379"
+    ports:
+      - "50051:50051"  # Expose port 50051
+    networks:
+      - backend
+    depends_on:
+      mysql-auth:
+        condition: service_healthy
+      redis-auth:
+        condition: service_started
 
 
 volumes:

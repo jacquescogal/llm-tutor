@@ -1,0 +1,104 @@
+// subject.proto
+
+syntax = "proto3";
+import "common.proto";
+package subject;
+
+option go_package = "authentication_service/internal/proto/subject";
+
+service SubjectService {
+    rpc CreateSubject (CreateSubjectRequest) returns (CreateSubjectResponse);
+    rpc GetSubjectById (GetSubjectByIdRequest) returns (GetSubjectByIdResponse);
+    rpc GetSubjectsByUserId (GetSubjectsByUserIdRequest) returns (GetSubjectsByUserIdResponse);
+    rpc GetSubjectsByNameSearch (GetSubjectsByNameSearchRequest) returns (GetSubjectsByNameSearchResponse);
+    rpc UpdateSubject (UpdateSubjectRequest) returns (UpdateSubjectResponse);
+    rpc DeleteSubject (DeleteSubjectRequest) returns (DeleteSubjectResponse);
+  }
+  
+
+
+// SubjectService
+message CreateSubjectRequest {
+    uint64 user_id = 1; // This is the user_id of the user who is creating the subject
+    string subject_name = 2;
+    string subject_description = 3;
+    bool is_public = 4;
+  }
+  
+  message CreateSubjectResponse {
+  }
+  
+  message GetSubjectByIdRequest {
+    uint64 user_id = 1;
+    uint64 subject_id = 2;
+  }
+  
+  message GetSubjectByIdResponse {
+    DBSubject subject = 1;
+  }
+  
+  message GetSubjectsByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+  
+  message GetSubjectsByUserIdResponse {
+    repeated DBSubject subjects = 1;
+  }
+  
+  message GetSubjectsByNameSearchRequest {
+    uint64 user_id = 1;
+    string search_query = 2;
+    uint32 page_number = 3;
+    uint32 page_size = 4;
+    common.ORDER_BY_FIELD order_by_field = 5;
+    common.ORDER_BY_DIRECTION order_by_direction = 6;
+  }
+  
+  message GetSubjectsByNameSearchResponse {
+    repeated DBSubject subjects = 1;
+  }
+  
+  message UpdateSubjectRequest {
+    uint64 user_id = 1;
+    uint64 subject_id = 2;
+    string subject_name = 3;
+    string subject_description = 4;
+    bool is_public = 5;
+  }
+  
+  message UpdateSubjectResponse {
+  }
+  
+  message DeleteSubjectRequest {
+    uint64 user_id = 1;
+    uint64 subject_id = 2;
+  }
+  
+  message DeleteSubjectResponse {
+  }
+
+// DB Models
+message DBUserSubjectMap {
+    uint64 user_id = 1;
+    uint64 subject_id = 2;
+    common.UserSubjectRole user_subject_role = 3;
+    bool is_favourite = 4;
+  }
+  
+  message DBSubject {
+    uint64 subject_id = 1;
+    string subject_name = 2;
+    string subject_description = 3;
+    bool is_public = 4;
+    uint64 created_time = 5;
+    uint64 updated_time = 6;
+  }
+  
+  message DBSubjectModuleMap {
+    uint64 subject_id = 1;
+    uint64 module_id = 2;
+  }

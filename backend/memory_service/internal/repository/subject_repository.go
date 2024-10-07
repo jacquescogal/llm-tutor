@@ -7,7 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	mpb "memory_core/internal/proto/memory"
+	mpb "memory_core/internal/proto/subject"
+	"memory_core/internal/proto/common"
 	"time"
 )
 
@@ -80,7 +81,7 @@ func (repo *SubjectRepository) GetSubjectById(ctx context.Context, db *sql.DB, u
 }
 
 // GetSubjectsByUserId retrieves subjects if public or if the user is a member of the subject
-func (repo *SubjectRepository) GetSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField mpb.ORDER_BY_FIELD, orderByDirection mpb.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+func (repo *SubjectRepository) GetSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
@@ -114,7 +115,7 @@ func (repo *SubjectRepository) GetSubjectsByUserId(ctx context.Context, db *sql.
 }
 
 // GetSubjectsByNameSearch retrieves subjects by name search
-func (repo *SubjectRepository) GetSubjectsByNameSearch(ctx context.Context, db *sql.DB, userID uint64, nameSearch string, pageNumber, pageSize uint32, orderByField mpb.ORDER_BY_FIELD, orderByDirection mpb.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+func (repo *SubjectRepository) GetSubjectsByNameSearch(ctx context.Context, db *sql.DB, userID uint64, nameSearch string, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
@@ -182,23 +183,23 @@ func (repo *SubjectRepository) DeleteSubject(ctx context.Context, tx *sql.Tx, su
 	return nil
 }
 
-func (repo *SubjectRepository) generateSubjectOrderByString(orderByField mpb.ORDER_BY_FIELD, orderByDirection mpb.ORDER_BY_DIRECTION) string {
+func (repo *SubjectRepository) generateSubjectOrderByString(orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) string {
 	var orderByString string
 
 	switch orderByField {
-	case mpb.ORDER_BY_FIELD_ORDER_BY_FIELD_ID:
+	case common.ORDER_BY_FIELD_ORDER_BY_FIELD_ID:
 		orderByString = "subject_id"
-	case mpb.ORDER_BY_FIELD_ORDER_BY_FIELD_TITLE:
+	case common.ORDER_BY_FIELD_ORDER_BY_FIELD_TITLE:
 		orderByString = "subject_name"
-	case mpb.ORDER_BY_FIELD_ORDER_BY_FIELD_CREATED_TIME:
+	case common.ORDER_BY_FIELD_ORDER_BY_FIELD_CREATED_TIME:
 		orderByString = "created_time"
-	case mpb.ORDER_BY_FIELD_ORDER_BY_FIELD_UPDATED_TIME:
+	case common.ORDER_BY_FIELD_ORDER_BY_FIELD_UPDATED_TIME:
 		orderByString = "updated_time"
 	default:
 		orderByString = "created_time"
 	}
 
-	if orderByDirection == mpb.ORDER_BY_DIRECTION_ORDER_BY_DIRECTION_ASC {
+	if orderByDirection == common.ORDER_BY_DIRECTION_ORDER_BY_DIRECTION_ASC {
 		orderByString += " ASC"
 	} else {
 		orderByString += " DESC"

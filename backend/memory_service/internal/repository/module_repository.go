@@ -6,7 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	mpb "memory_core/internal/proto/memory"
+	mpb "memory_core/internal/proto/module"
+	"memory_core/internal/proto/common"
 	"time"
 )
 
@@ -35,7 +36,7 @@ func (repo *ModuleRepository) CreateModule(ctx context.Context, tx *sql.Tx, modu
 }
 
 // GetModuleById retrieves a module by module_id
-func (repo *ModuleRepository) GetModuleById(ctx context.Context, db *sql.DB, moduleID uint64) (*mpb.DBModule, error) {
+func (repo *ModuleRepository) GetModuleById(ctx context.Context, db *sql.DB, userID, moduleID uint64) (*mpb.DBModule, error) {
 	// returns the module if it is public or the user is a member of the module
 	query := `
 		WITH module AS (
@@ -57,7 +58,7 @@ func (repo *ModuleRepository) GetModuleById(ctx context.Context, db *sql.DB, mod
 		LIMIT 1
 	`
 
-	row := db.QueryRowContext(ctx, query, moduleID)
+	row := db.QueryRowContext(ctx, query, moduleID, userID, moduleID)
 	var dbModule mpb.DBModule
 	err := row.Scan(&dbModule.ModuleId, &dbModule.ModuleName, &dbModule.ModuleDescription, &dbModule.IsPublic, &dbModule.CreatedTime, &dbModule.UpdatedTime)
 	if err != nil {
@@ -74,7 +75,7 @@ func (repo *ModuleRepository) GetModuleById(ctx context.Context, db *sql.DB, mod
 }
 
 // GetModulesBySubjectId retrieves all modules by subject_id
-func (repo *ModuleRepository) GetModulesBySubjectId(ctx context.Context, db *sql.DB, subjectID uint64, pageNumber, pageSize uint32, orderByField mpb.ORDER_BY_FIELD, orderByDirection mpb.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
+func (repo *ModuleRepository) GetModulesBySubjectId(ctx context.Context, db *sql.DB, subjectID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
 	// if subject owns the module, return the module
 	// if module is private, the mapper will not exist
 	offset := pageOffset(pageNumber, pageSize)
@@ -113,9 +114,8 @@ func (repo *ModuleRepository) GetModulesBySubjectId(ctx context.Context, db *sql
 	log.Println("Modules retrieved successfully")
 	return modules, nil
 }
-// TODO: continue here, do i create a different method for public and private search?
-// GetPublicModulesByNameSearch retrieves modules by module_name search for public modules
-func (repo *ModuleRepository) GetPublicModulesByNameSearch(ctx context.Context, db *sql.DB, moduleNameSearch string, pageNumber, pageSize uint32, orderByField mpb.ORDER_BY_FIELD, orderByDirection mpb.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
+
+func (repo *ModuleRepository) GetPublicModulesByNameSearch(ctx context.Context, db *sql.DB, moduleNameSearch string, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateModuleOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
@@ -242,23 +242,23 @@ func (repo *ModuleRepository) DeleteModule(ctx context.Context, tx *sql.Tx, modu
 }
 
 // generateModuleOrderByString generates the ORDER BY string for the module query
-func (repo *ModuleRepository) generateModuleOrderByString(orderByField mpb.ORDER_BY_FIELD, orderByDirection mpb.ORDER_BY_DIRECTION) string {
+func (repo *ModuleRepository) generateModuleOrderByString(orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) string {
 	var orderByString string
 
 	switch orderByField {
-	case mpb.ORDER_BY_FIELD_ORDER_BY_FIELD_ID:
+	case common.ORDER_BY_FIELD_ORDER_BY_FIELD_ID:
 		orderByString = "module_id"
-	case mpb.ORDER_BY_FIELD_ORDER_BY_FIELD_TITLE:
+	case common.ORDER_BY_FIELD_ORDER_BY_FIELD_TITLE:
 		orderByString = "module_name"
-	case mpb.ORDER_BY_FIELD_ORDER_BY_FIELD_CREATED_TIME:
+	case common.ORDER_BY_FIELD_ORDER_BY_FIELD_CREATED_TIME:
 		orderByString = "created_time"
-	case mpb.ORDER_BY_FIELD_ORDER_BY_FIELD_UPDATED_TIME:
+	case common.ORDER_BY_FIELD_ORDER_BY_FIELD_UPDATED_TIME:
 		orderByString = "updated_time"
 	default:
 		orderByString = "created_time"
 	}
 
-	if orderByDirection == mpb.ORDER_BY_DIRECTION_ORDER_BY_DIRECTION_ASC {
+	if orderByDirection == common.ORDER_BY_DIRECTION_ORDER_BY_DIRECTION_ASC {
 		orderByString += " ASC"
 	} else {
 		orderByString += " DESC"

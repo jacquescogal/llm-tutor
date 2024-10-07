@@ -1,10 +1,17 @@
+SERVICE_NAME := authentication_service
 build:
 	go install google.golang.org/protobuf/cmd/protoc-gen-go@latest
-	mkdir -p proto
-	cp ../../protos/authenticator.proto proto/
-	protoc --go_out=. --go-grpc_out=. proto/*.proto
+	go mod tidy
+	mkdir -p protos
+	cp ../../protos/* protos/
+	@find protos/ -type f -name "*.proto" -exec sed -i '' 's|%replace%|$(SERVICE_NAME)|g' {} \;
+	protoc --go_out=. --proto_path=./protos --go-grpc_out=. protos/*.proto
+	rm -rf internal/proto
+	mv -f $(SERVICE_NAME)/internal/proto internal/
+	rm -rf $(SERVICE_NAME)
 	go build -o bin/server cmd/main.go
 
 run:
+	go mod tidy
 	go build -o bin/server cmd/main.go
 	bin/server

@@ -6,7 +6,8 @@ import (
 	"fmt"
 	"log"
 	"memory_core/internal/cache"
-	mpb "memory_core/internal/proto/memory"
+	mpb "memory_core/internal/proto/subject"
+	"memory_core/internal/proto/common"
 )
 
 type UserSubjectMapRepository struct {
@@ -18,11 +19,11 @@ func NewUserSubjectMapRepository(cacheStore *cache.CacheStore) *UserSubjectMapRe
 }
 
 // PutUserSubjectMapping inserts a new user subject mapping into user_subject_map_tab or updates an existing one
-func (repo *UserSubjectMapRepository) PutUserSubjectMapping(ctx context.Context, tx *sql.Tx, userId, subjectId uint64, role mpb.UserSubjectRole, isFavourite bool) error {
+func (repo *UserSubjectMapRepository) PutUserSubjectMapping(ctx context.Context, tx *sql.Tx, userId, subjectId uint64, role common.UserSubjectRole, isFavourite bool) error {
 	// either one of user_subject_role or is_favourite will be put
 	ifDuplicateString := "is_favourite = VALUES(is_favourite)"
 
-	if role != mpb.UserSubjectRole_USER_SUBJECT_ROLE_UNDEFINED {
+	if role != common.UserSubjectRole_USER_SUBJECT_ROLE_UNDEFINED {
 		ifDuplicateString = "user_subject_role = VALUES(user_subject_role)"
 	}
 

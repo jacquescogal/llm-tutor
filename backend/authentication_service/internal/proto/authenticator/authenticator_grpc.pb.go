@@ -4,7 +4,7 @@
 // versions:
 // - protoc-gen-go-grpc v1.5.1
 // - protoc             v5.28.1
-// source: proto/authenticator.proto
+// source: authenticator.proto
 
 package authenticator
 
@@ -21,10 +21,10 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	UserService_CreateUser_FullMethodName          = "/UserService/CreateUser"
-	UserService_AuthenticateSession_FullMethodName = "/UserService/AuthenticateSession"
-	UserService_CreateSession_FullMethodName       = "/UserService/CreateSession"
-	UserService_DeleteSession_FullMethodName       = "/UserService/DeleteSession"
+	UserService_CreateUser_FullMethodName          = "/authenticator.UserService/CreateUser"
+	UserService_AuthenticateSession_FullMethodName = "/authenticator.UserService/AuthenticateSession"
+	UserService_CreateSession_FullMethodName       = "/authenticator.UserService/CreateSession"
+	UserService_DeleteSession_FullMethodName       = "/authenticator.UserService/DeleteSession"
 )
 
 // UserServiceClient is the client API for UserService service.
@@ -212,7 +212,7 @@ func _UserService_DeleteSession_Handler(srv interface{}, ctx context.Context, de
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
 var UserService_ServiceDesc = grpc.ServiceDesc{
-	ServiceName: "UserService",
+	ServiceName: "authenticator.UserService",
 	HandlerType: (*UserServiceServer)(nil),
 	Methods: []grpc.MethodDesc{
 		{
@@ -233,5 +233,5 @@ var UserService_ServiceDesc = grpc.ServiceDesc{
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
-	Metadata: "proto/authenticator.proto",
+	Metadata: "authenticator.proto",
 }

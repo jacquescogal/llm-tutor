@@ -5,9 +5,6 @@ import (
 	"context"
 )
 
-// ensure AuthenticationService implements the authenticator.UserServiceClient interface
-var _ authenticator.UserServiceClient = &AuthenticationService{}
-
 type AuthenticationService struct {
     client authenticator.UserServiceClient
 }
@@ -44,11 +41,11 @@ func (s *AuthenticationService) DeleteSession(sessionID string) error {
     return nil
 }
 
-func (s *AuthenticationService) AuthenticateSession(sessionID string) (*authenticator.UserSession, error) {
+func (s *AuthenticationService) AuthenticateSession(sessionID string) (*authenticator.AuthenticateSessionResponse, error) {
     req := &authenticator.AuthenticateSessionRequest{SessionId: sessionID}
     resp, err := s.client.AuthenticateSession(context.Background(), req)
     if err != nil {
         return nil, HandleGRPCError(err)
     }
-    return resp.UserSession, nil
+    return resp, nil
 }
