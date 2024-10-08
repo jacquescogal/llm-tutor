@@ -7,8 +7,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	mpb "memory_core/internal/proto/subject"
 	"memory_core/internal/proto/common"
+	mpb "memory_core/internal/proto/subject"
 	"time"
 )
 
@@ -40,48 +40,50 @@ func (repo *SubjectRepository) CreateSubject(ctx context.Context, tx *sql.Tx, su
 }
 
 // GetPublicSubjects retrieves all public subjects
-func (repo *SubjectRepository) GetPublicSubjects(ctx context.Context, db *sql.DB, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+func (repo *SubjectRepository) GetPublicSubjects(ctx context.Context, db *sql.DB, userId uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullSubject, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT subject_id, subject_name, subject_description, is_public, created_time, updated_time
-		FROM subject_tab
-		WHERE is_public = 1
-		ORDER BY %s
+		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time,
+		COALESCE(ma.user_subject_role, 0), COALESCE(ma.is_favourite, 0)
+		FROM subject_tab s
+		LEFT JOIN user_subject_map_tab ma ON s.subject_id = ma.subject_id AND ma.user_id = ?
+		WHERE s.is_public = 1
+		ORDER BY s.%s
 		LIMIT ? OFFSET ?
 		`, sanitisedOrderByString)
-
-	rows, err := db.QueryContext(ctx, query, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, userId, pageSize, offset)
 	if err != nil {
 		log.Printf("Error retrieving subjects: %v\n", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var subjects []*mpb.DBSubject
+	var fullSubjects []*mpb.FullSubject
 	for rows.Next() {
-		var dbSubject mpb.DBSubject
-		if err := rows.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime); err != nil {
+		var fullSubject mpb.FullSubject
+		fullSubject.Subject = new(mpb.DBSubject)
+		if err := rows.Scan(&fullSubject.Subject.SubjectId, &fullSubject.Subject.SubjectName, &fullSubject.Subject.SubjectDescription, &fullSubject.Subject.IsPublic, &fullSubject.Subject.CreatedTime, &fullSubject.Subject.UpdatedTime, &fullSubject.UserSubjectRole, &fullSubject.IsFavourite); err != nil {
 			log.Printf("Error scanning subject row: %v\n", err)
 			return nil, err
 		}
-		subjects = append(subjects, &dbSubject)
+		fullSubjects = append(fullSubjects, &fullSubject)
 	}
 
-	log.Printf("Retrieved %d subjects\n", len(subjects))
-	return subjects, nil
+	log.Printf("Retrieved %d subjects\n", len(fullSubjects))
+	return fullSubjects, nil
 }
 
 // GetPrivateSubjectsByUserId retrieves all private subjects for a user
-func (repo *SubjectRepository) GetPrivateSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+func (repo *SubjectRepository) GetPrivateSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullSubject, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
 
 	query := fmt.Sprintf(`
-		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time
+		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time,
+		COALESCE(ma.user_subject_role, 0), COALESCE(ma.is_favourite, 0)
 		FROM subject_tab s
-		JOIN user_subject_map_tab ma ON s.subject_id = ma.subject_id
-		WHERE ma.user_id = ? AND ma.user_subject_role != 0
+		JOIN user_subject_map_tab ma ON s.subject_id = ma.subject_id AND ma.user_id = ? AND ma.user_subject_role != 0
 		ORDER BY s.%s
 		LIMIT ? OFFSET ?
 		`, sanitisedOrderByString)
@@ -93,26 +95,28 @@ func (repo *SubjectRepository) GetPrivateSubjectsByUserId(ctx context.Context, d
 	}
 	defer rows.Close()
 
-	var subjects []*mpb.DBSubject
+	var fullSubjects []*mpb.FullSubject
 	for rows.Next() {
-		var dbSubject mpb.DBSubject
-		if err := rows.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime); err != nil {
+		var fullSubject mpb.FullSubject
+		fullSubject.Subject = new(mpb.DBSubject)
+		if err := rows.Scan(&fullSubject.Subject.SubjectId, &fullSubject.Subject.SubjectName, &fullSubject.Subject.SubjectDescription, &fullSubject.Subject.IsPublic, &fullSubject.Subject.CreatedTime, &fullSubject.Subject.UpdatedTime, &fullSubject.UserSubjectRole, &fullSubject.IsFavourite); err != nil {
 			log.Printf("Error scanning subject row: %v\n", err)
 			return nil, err
 		}
-		subjects = append(subjects, &dbSubject)
+		fullSubjects = append(fullSubjects, &fullSubject)
 	}
 
-	log.Printf("Retrieved %d subjects\n", len(subjects))
-	return subjects, nil
+	log.Printf("Retrieved %d subjects\n", len(fullSubjects))
+	return fullSubjects, nil
 }
 
 // GetFavouriteSubjectsByUserId retrieves all favorite subjects for a user
-func (repo *SubjectRepository) GetFavouriteSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+func (repo *SubjectRepository) GetFavouriteSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullSubject, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time
+		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time, 
+		COALESCE(ma.user_subject_role, 0), COALESCE(ma.is_favourite, 0)
 		FROM subject_tab s
 		JOIN user_subject_map_tab ma ON s.subject_id = ma.subject_id
 		WHERE ma.user_id = ? AND ma.is_favourite = 1
@@ -127,24 +131,23 @@ func (repo *SubjectRepository) GetFavouriteSubjectsByUserId(ctx context.Context,
 	}
 	defer rows.Close()
 
-	var subjects []*mpb.DBSubject
+	var fullSubjects []*mpb.FullSubject
 	for rows.Next() {
-		var dbSubject mpb.DBSubject
-		if err := rows.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime); err != nil {
+		var fullSubject mpb.FullSubject
+		fullSubject.Subject = new(mpb.DBSubject)
+		if err := rows.Scan(&fullSubject.Subject.SubjectId, &fullSubject.Subject.SubjectName, &fullSubject.Subject.SubjectDescription, &fullSubject.Subject.IsPublic, &fullSubject.Subject.CreatedTime, &fullSubject.Subject.UpdatedTime, &fullSubject.UserSubjectRole, &fullSubject.IsFavourite); err != nil {
 			log.Printf("Error scanning subject row: %v\n", err)
 			return nil, err
 		}
-		subjects = append(subjects, &dbSubject)
+		fullSubjects = append(fullSubjects, &fullSubject)
 	}
 
-	log.Printf("Retrieved %d subjects\n", len(subjects))
-	return subjects, nil
+	log.Printf("Retrieved %d subjects\n", len(fullSubjects))
+	return fullSubjects, nil
 }
 
-
-
 // GetSubjectById retrieves a subject by subject_id
-func (repo *SubjectRepository) GetSubjectById(ctx context.Context, db *sql.DB, userID, subjectID uint64) (*mpb.DBSubject, error) {
+func (repo *SubjectRepository) GetSubjectById(ctx context.Context, db *sql.DB, userID, subjectID uint64) (*mpb.FullSubject, error) {
 	// get subject by subject_id
 	// get user_subject_map_tab by user_id and subject_id
 	// if subject is public or user is a member of the subject, return subject
@@ -156,12 +159,13 @@ func (repo *SubjectRepository) GetSubjectById(ctx context.Context, db *sql.DB, u
 			LIMIT 1
 			),
 		user_subject_map AS (
-			SELECT user_id, subject_id, user_subject_role
+			SELECT user_id, subject_id, user_subject_role, is_favourite
 			FROM user_subject_map_tab
 			WHERE user_id = ? AND subject_id = ?
 			LIMIT 1
 		)
-		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time
+		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time, 
+		COALESCE(ma.user_subject_role, 0), COALESCE(ma.is_favourite, 0)
 		FROM subject s
 		LEFT JOIN user_subject_map ma ON s.subject_id = ma.subject_id
 		WHERE (s.is_public = 1 OR (ma.user_id IS NOT NULL AND ma.user_subject_role != 0))
@@ -169,8 +173,9 @@ func (repo *SubjectRepository) GetSubjectById(ctx context.Context, db *sql.DB, u
 	`
 
 	row := db.QueryRowContext(ctx, query, subjectID, userID, subjectID)
-	var dbSubject mpb.DBSubject
-	err := row.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime)
+	var fullSubject mpb.FullSubject
+	fullSubject.Subject = new(mpb.DBSubject)
+	err := row.Scan(&fullSubject.Subject.SubjectId, &fullSubject.Subject.SubjectName, &fullSubject.Subject.SubjectDescription, &fullSubject.Subject.IsPublic, &fullSubject.Subject.CreatedTime, &fullSubject.Subject.UpdatedTime, &fullSubject.UserSubjectRole, &fullSubject.IsFavourite)
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Subject not found: %v\n", err)
@@ -181,15 +186,16 @@ func (repo *SubjectRepository) GetSubjectById(ctx context.Context, db *sql.DB, u
 	}
 
 	log.Println("Subject retrieved successfully")
-	return &dbSubject, nil
+	return &fullSubject, nil
 }
 
 // GetSubjectsByUserId retrieves subjects if public or if the user is a member of the subject
-func (repo *SubjectRepository) GetSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+func (repo *SubjectRepository) GetSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullSubject, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time
+		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time, 
+		COALESCE(ma.user_subject_role, 0), COALESCE(ma.is_favourite, 0)
 		FROM subject_tab s
 		LEFT JOIN user_subject_map_tab ma ON s.subject_id = ma.subject_id AND ma.user_id = ?
 		WHERE s.is_public = 1 OR (ma.user_id IS NOT NULL AND ma.user_subject_role != 0)
@@ -204,34 +210,35 @@ func (repo *SubjectRepository) GetSubjectsByUserId(ctx context.Context, db *sql.
 	}
 	defer rows.Close()
 
-	var subjects []*mpb.DBSubject
+	var fullSubjects []*mpb.FullSubject
 	for rows.Next() {
-		var dbSubject mpb.DBSubject
-		if err := rows.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime); err != nil {
+		var fullSubject mpb.FullSubject
+		fullSubject.Subject = new(mpb.DBSubject)
+		if err := rows.Scan(&fullSubject.Subject.SubjectId, &fullSubject.Subject.SubjectName, &fullSubject.Subject.SubjectDescription, &fullSubject.Subject.IsPublic, &fullSubject.Subject.CreatedTime, &fullSubject.Subject.UpdatedTime, &fullSubject.UserSubjectRole, &fullSubject.IsFavourite); err != nil {
 			log.Printf("Error scanning subject row: %v\n", err)
 			return nil, err
 		}
-		subjects = append(subjects, &dbSubject)
+		fullSubjects = append(fullSubjects, &fullSubject)
 	}
 
-	log.Printf("Retrieved %d subjects\n", len(subjects))
-	return subjects, nil
+	log.Printf("Retrieved %d subjects\n", len(fullSubjects))
+	return fullSubjects, nil
 }
 
 // GetSubjectsByNameSearch retrieves subjects by name search
-func (repo *SubjectRepository) GetSubjectsByNameSearch(ctx context.Context, db *sql.DB, userID uint64, nameSearch string, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+func (repo *SubjectRepository) GetSubjectsByNameSearch(ctx context.Context, db *sql.DB, userID uint64, nameSearch string, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullSubject, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time
+		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time, 
+		COALESCE(ma.user_subject_role, 0), COALESCE(ma.is_favourite, 0)
 		FROM subject_tab s
 		LEFT JOIN user_subject_map_tab ma ON s.subject_id = ma.subject_id AND ma.user_id = ?
-		WHERE s.is_public = 1 OR (ma.user_id IS NOT NULL AND ma.user_subject_role != 0)
+		WHERE (s.is_public = 1 OR (ma.user_id IS NOT NULL AND ma.user_subject_role != 0))
 		AND s.subject_name LIKE ?
 		ORDER BY s.%s
 		LIMIT ? OFFSET ?
 		`, sanitisedOrderByString)
-
 	rows, err := db.QueryContext(ctx, query, userID, "%"+nameSearch+"%", pageSize, offset)
 	if err != nil {
 		log.Printf("Error retrieving subjects: %v\n", err)
@@ -239,18 +246,19 @@ func (repo *SubjectRepository) GetSubjectsByNameSearch(ctx context.Context, db *
 	}
 	defer rows.Close()
 
-	var subjects []*mpb.DBSubject
+	var fullSubjects []*mpb.FullSubject
 	for rows.Next() {
-		var dbSubject mpb.DBSubject
-		if err := rows.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime); err != nil {
+		var fullSubject mpb.FullSubject
+		fullSubject.Subject = new(mpb.DBSubject)
+		if err := rows.Scan(&fullSubject.Subject.SubjectId, &fullSubject.Subject.SubjectName, &fullSubject.Subject.SubjectDescription, &fullSubject.Subject.IsPublic, &fullSubject.Subject.CreatedTime, &fullSubject.Subject.UpdatedTime, &fullSubject.UserSubjectRole, &fullSubject.IsFavourite); err != nil {
 			log.Printf("Error scanning subject row: %v\n", err)
 			return nil, err
 		}
-		subjects = append(subjects, &dbSubject)
+		fullSubjects = append(fullSubjects, &fullSubject)
 	}
 
-	log.Printf("Retrieved %d subjects\n", len(subjects))
-	return subjects, nil
+	log.Printf("Retrieved %d subjects\n", len(fullSubjects))
+	return fullSubjects, nil
 }
 
 // UpdateSubject updates a subject by subject_id

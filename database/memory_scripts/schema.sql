@@ -9,7 +9,7 @@ CREATE TABLE IF NOT EXISTS subject_tab (
     subject_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,                          -- Primary key with auto increment for subject_id
     subject_name VARCHAR(255) NOT NULL,                                             -- Subject name field with max length 255 and NOT NULL constraint
     subject_description TEXT NOT NULL,                                              -- Subject description field with TEXT data type and NOT NULL constraint                     
-    is_public BOOLEAN NOT NULL,                                                     -- Boolean field to indicate if the subject is public or not
+    is_public BOOLEAN NOT NULL DEFAULT false,                                                     -- Boolean field to indicate if the subject is public or not
     created_time BIGINT UNSIGNED NOT NULL,                                          -- Created time field with BIGINT UNSIGNED data type and NOT NULL constraint
     updated_time BIGINT UNSIGNED NOT NULL                                      -- Last updated time field with BIGINT UNSIGNED data type and NOT NULL constraint
 ); -- subject_tab table stores the subject information.
@@ -24,8 +24,8 @@ CREATE INDEX idx_created_time ON subject_tab(created_time);
 CREATE TABLE IF NOT EXISTS user_subject_map_tab (
     user_id BIGINT UNSIGNED NOT NULL,                                               -- Foreign key to user_tab
     subject_id BIGINT UNSIGNED NOT NULL,                                            -- Foreign key to subject_tab
-    user_subject_role INT UNSIGNED NOT NULL,                                        -- Enum field for user id role in subject defined in memory proto file
-    is_favourite BOOLEAN NOT NULL,                                                   -- Boolean field to indicate if the subject is a favorite
+    user_subject_role INT UNSIGNED NOT NULL DEFAULT 0,                                        -- Enum field for user id role in subject defined in memory proto file
+    is_favourite BOOLEAN NOT NULL DEFAULT false,                                                   -- Boolean field to indicate if the subject is a favorite
     PRIMARY KEY (user_id, subject_id),                                              -- Composite primary key
     FOREIGN KEY (subject_id) REFERENCES subject_tab(subject_id) ON DELETE CASCADE   -- Foreign key constraint
 ); -- user_subject_map_tab table is a many-to-many relationship table between user_tab and subject_tab tables. It stores relationship between user and subject.
@@ -35,7 +35,7 @@ CREATE TABLE IF NOT EXISTS module_tab (
     module_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,                            -- Primary key with auto increment for module_id         
     module_name VARCHAR(255) NOT NULL,                                               -- Module name field with max length 255 and NOT NULL constraint            
     module_description TEXT NOT NULL,                                                -- Module description field with TEXT data type and NOT NULL constraint
-    is_public BOOLEAN NOT NULL,                                                      -- Boolean field to indicate if the module is public or not
+    is_public BOOLEAN NOT NULL DEFAULT true,                                                      -- Boolean field to indicate if the module is public or not
     created_time BIGINT UNSIGNED NOT NULL,                                          -- Created time field with BIGINT UNSIGNED data type and NOT NULL constraint            
     updated_time BIGINT UNSIGNED NOT NULL                                      -- Last updated time field with BIGINT UNSIGNED data type and NOT NULL constraint                          
 ); -- module_tab table stores the module information.
@@ -58,8 +58,8 @@ CREATE TABLE IF NOT EXISTS subject_module_map_tab (
 CREATE TABLE IF NOT EXISTS user_module_map_tab (
     user_id BIGINT UNSIGNED NOT NULL,                                               -- Foreign key to user_tab
     module_id BIGINT UNSIGNED NOT NULL,                                             -- Foreign key to module_tab
-    user_module_role INT UNSIGNED NOT NULL,                                         -- Enum field for user id role in module defined in memory proto file
-    is_favourite BOOLEAN NOT NULL,                                                   -- Boolean field to indicate if the module is a favorite
+    user_module_role INT UNSIGNED NOT NULL DEFAULT 0,                                         -- Enum field for user id role in module defined in memory proto file
+    is_favourite BOOLEAN NOT NULL DEFAULT false,                                                   -- Boolean field to indicate if the module is a favorite
     PRIMARY KEY (user_id, module_id),                                               -- Composite primary key
     FOREIGN KEY (module_id) REFERENCES module_tab(module_id) ON DELETE CASCADE       -- Foreign key constraint
 ); -- user_module_map_tab table is a many-to-many relationship table between user_tab and module_tab tables. It stores relationship between user and module.
@@ -72,7 +72,7 @@ CREATE TABLE IF NOT EXISTS doc_tab (
     doc_name VARCHAR(255) NOT NULL,                                                                             -- Doc title field with max length 255 and NOT NULL constraint
     doc_description TEXT NOT NULL,                                                                              -- Doc description field with TEXT data type and NOT NULL constraint
     doc_summary TEXT NOT NULL,                                                                              -- Doc summary field with TEXT data type and NOT NULL constraint           
-    upload_status INT UNSIGNED NOT NULL,                                                                    -- Enum field for upload status defined in proto file
+    upload_status INT UNSIGNED NOT NULL DEFAULT 0,                                                                    -- Enum field for upload status defined in proto file
     s3_object_key VARCHAR(255) NOT NULL,                                                                       -- Object key field with max length 255 and NOT NULL constraint
     created_time BIGINT UNSIGNED NOT NULL,                                                                  -- Created time field with BIGINT UNSIGNED data type and NOT NULL constraint  
     updated_time BIGINT UNSIGNED NOT NULL,                                                             -- Last updated time field with BIGINT UNSIGNED data type and NOT NULL constraint

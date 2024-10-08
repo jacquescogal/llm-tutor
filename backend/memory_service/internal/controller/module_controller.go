@@ -8,7 +8,6 @@ import (
 	mpb "memory_core/internal/proto/module"
 	"memory_core/internal/repository"
 	"strings"
-	"sync"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -61,7 +60,7 @@ func (c *ModuleController) CreateModule(ctx context.Context, req *mpb.CreateModu
 	}
 
 	// create the mapping
-	err = c.userModuleMapRepo.PutUserModuleMapping(ctx, tx, req.GetUserId(), moduleId, common.UserModuleRole_USER_MODULE_ROLE_OWNER, false)
+	err = c.userModuleMapRepo.PutUserModuleMappingRole(ctx, tx, req.GetUserId(), moduleId, common.UserModuleRole_USER_MODULE_ROLE_OWNER)
 	if err != nil {
 		log.Printf("Failed to create user module mapping: %v", err)
 		return nil, err
@@ -78,7 +77,7 @@ func (c *ModuleController) CreateModule(ctx context.Context, req *mpb.CreateModu
 
 // GetPublicModules handles the business logic for retrieving all public modules
 func (c *ModuleController) GetPublicModules(ctx context.Context, req *mpb.GetPublicModulesRequest) (*mpb.GetPublicModulesResponse, error) {
-	modules, err := c.moduleRepo.GetPublicModules(ctx, c.db, req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
+	modules, err := c.moduleRepo.GetPublicModules(ctx, c.db, req.UserId, req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
 	if err != nil {
 		log.Printf("Failed to get public modules: %v", err)
 		return nil, err
@@ -126,33 +125,19 @@ func (c *ModuleController) GetModuleById(ctx context.Context, req *mpb.GetModule
 		return nil, status.Error(codes.InvalidArgument, "Module ID is required")
 	}
 	// start concurrent fetch using goroutines
-	var wg sync.WaitGroup
-	var module *mpb.DBModule
-	var userModuleMap *mpb.DBUserModuleMap
+	var module *mpb.FullModule
 
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		var err error
-		module, err = c.moduleRepo.GetModuleById(ctx, c.db, req.GetModuleId())
-		if err != nil {
-			log.Printf("Failed to get module by ID: %v", err)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		var err error
-		userModuleMap, err = c.userModuleMapRepo.GetUserModuleMapping(ctx, c.db, req.GetUserId(), req.GetModuleId())
-		if err != nil {
-			log.Printf("Failed to get user module access: %v", err)
-		}
-	}()
-	wg.Wait()
+	var err error
+	module, err = c.moduleRepo.GetModuleById(ctx, c.db, req.GetUserId(), req.GetModuleId())
+	if err != nil {
+		log.Printf("Failed to get module by ID: %v", err)
+	}
+	
 
 	// check if the module is public or if the user has access to the module
 	if module == nil {
 		return nil, status.Error(codes.NotFound, "Module not found")
-	} else if !module.GetIsPublic() && (userModuleMap == nil || userModuleMap.GetUserModuleRole() == common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED) {
+	} else if !module.Module.GetIsPublic() && (module.GetUserModuleRole() == common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED) {
 		return nil, status.Error(codes.PermissionDenied, "User does not have permission to view module")
 	}
 	return &mpb.GetModuleByIdResponse{Module: module}, nil
@@ -164,7 +149,7 @@ func (c *ModuleController) GetModulesBySubjectId(ctx context.Context, req *mpb.G
 		return nil, status.Error(codes.InvalidArgument, "User ID is required")
 	}
 
-	modules, err := c.moduleRepo.GetModulesBySubjectId(ctx, c.db, req.GetSubjectId(), req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
+	modules, err := c.moduleRepo.GetModulesBySubjectId(ctx, c.db, req.GetUserId(), req.GetSubjectId(), req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
 	if err != nil {
 		log.Printf("Failed to get modules by subject ID: %v", err)
 		return nil, err
@@ -181,7 +166,7 @@ func (c *ModuleController) GetModulesByNameSearch(ctx context.Context, req *mpb.
 		return nil, status.Error(codes.InvalidArgument, "User ID is required")
 	}
 	// todo: decide if we want to allow public modules to be searched by anyone
-	modules, err := c.moduleRepo.GetPublicModulesByNameSearch(ctx, c.db, req.GetSearchQuery(), req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
+	modules, err := c.moduleRepo.GetPublicModulesByNameSearch(ctx, c.db, req.GetUserId(), req.GetSearchQuery(), req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
 	if err != nil {
 		log.Printf("Failed to get modules by name search: %v", err)
 		return nil, err
@@ -295,6 +280,47 @@ func (c *ModuleController) DeleteModule(ctx context.Context, req *mpb.DeleteModu
 
 	log.Println("Module deleted successfully")
 	return &mpb.DeleteModuleResponse{}, nil
+}
+
+func (c *ModuleController) SetUserModuleFavourite(ctx context.Context, req *mpb.SetUserModuleFavouriteRequest) (*mpb.SetUserModuleFavouriteResponse, error) {
+	// validate input
+	if req.GetUserId() == 0 {
+		log.Println("User ID is required")
+		return nil, status.Error(codes.InvalidArgument, "User ID is required")
+	} else if req.GetModuleId() == 0 {
+		log.Println("Module ID is required")
+		return nil, status.Error(codes.InvalidArgument, "Module ID is required")
+	}
+
+	// begin transaction
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to begin transaction: %v", err)
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Printf("Recovered from panic: %v", r)
+		}
+	}()
+
+	// set user module favourite
+	err = c.userModuleMapRepo.PutUserModuleMappingFavourite(ctx, tx, req.GetUserId(), req.GetModuleId(), req.GetIsFavourite())
+	if err != nil {
+		log.Printf("Failed to set user module favourite: %v", err)
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
+		return nil, err
+	}
+
+	log.Println("User module favourite set successfully")
+	return &mpb.SetUserModuleFavouriteResponse{}, nil
 }
 
 func parseAndValidateModuleName(moduleName string) (string, error) {

@@ -8,7 +8,6 @@ import (
 	qpb "memory_core/internal/proto/question"
 	"memory_core/internal/repository"
 	modpb "memory_core/internal/proto/module"
-	"sync"
 
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
@@ -273,33 +272,18 @@ func (c *QuestionController) DeleteQuestion(ctx context.Context, req *qpb.Delete
 // helper function to check if the user has access to the memory
 func (c *QuestionController) getViewingPrivileges(ctx context.Context, userId, moduleId uint64) error {
 	// start concurrent fetch using goroutines
-	var wg sync.WaitGroup
-	var module *modpb.DBModule
-	var userModuleMap *modpb.DBUserModuleMap
+	var module *modpb.FullModule
 
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		var err error
-		module, err = c.moduleRepo.GetModuleById(ctx, c.db, moduleId)
-		if err != nil {
-			log.Printf("Failed to get module by ID: %v", err)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		var err error
-		userModuleMap, err = c.userModuleMapRepo.GetUserModuleMapping(ctx, c.db, userId, moduleId)
-		if err != nil {
-			log.Printf("Failed to get user module access: %v", err)
-		}
-	}()
-	wg.Wait()
+	var err error
+	module, err = c.moduleRepo.GetModuleById(ctx, c.db, userId, moduleId)
+	if err != nil {
+		log.Printf("Failed to get module by ID: %v", err)
+	}
 
 	// check if the module is public or if the user has access to the module
 	if module == nil {
 		return status.Error(codes.NotFound, "Module not found")
-	} else if !module.GetIsPublic() && (userModuleMap == nil || userModuleMap.GetUserModuleRole() == common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED) {
+	} else if !module.Module.GetIsPublic() && (module.GetUserModuleRole() == common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED) {
 		return status.Error(codes.PermissionDenied, "User does not have permission to view module")
 	}
 	return nil
@@ -310,34 +294,18 @@ func (c *QuestionController) getViewingPrivileges(ctx context.Context, userId, m
 // helper function to check if the user has edit access to module that contains the doc and question
 func (c *QuestionController) getEditPrivileges(ctx context.Context, userId, moduleId uint64) error {
 
-	// start concurrent fetch using goroutines
-	var wg sync.WaitGroup
-	var module *modpb.DBModule
-	var userModuleMap *modpb.DBUserModuleMap
+	var module *modpb.FullModule
 
-	wg.Add(2)
-	go func() {
-		defer wg.Done()
-		var err error
-		module, err = c.moduleRepo.GetModuleById(ctx, c.db, moduleId)
-		if err != nil {
-			log.Printf("Failed to get module by ID: %v", err)
-		}
-	}()
-	go func() {
-		defer wg.Done()
-		var err error
-		userModuleMap, err = c.userModuleMapRepo.GetUserModuleMapping(ctx, c.db, userId, moduleId)
-		if err != nil {
-			log.Printf("Failed to get user module access: %v", err)
-		}
-	}()
-	wg.Wait()
+	var err error
+	module, err = c.moduleRepo.GetModuleById(ctx, c.db, userId, moduleId)
+	if err != nil {
+		log.Printf("Failed to get module by ID: %v", err)
+	}
 
 	// check if the module is public or if the user has access to the module
 	if module == nil {
 		return status.Error(codes.NotFound, "Module not found")
-	} else if userModuleMap == nil || userModuleMap.GetUserModuleRole() == common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED || userModuleMap.GetUserModuleRole() == common.UserModuleRole_USER_MODULE_ROLE_VIEWER {
+	} else if (module.GetUserModuleRole() == common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED || module.GetUserModuleRole() == common.UserModuleRole_USER_MODULE_ROLE_VIEWER) {
 		return status.Error(codes.PermissionDenied, "User does not have permission to view module")
 	}
 	return nil

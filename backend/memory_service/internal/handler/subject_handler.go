@@ -62,3 +62,7 @@ func (subjectHandler *SubjectHandler) UpdateSubject(ctx context.Context, updateS
 func (subjectHandler *SubjectHandler) DeleteSubject(ctx context.Context, deleteSubjectRequest *subject.DeleteSubjectRequest) (*subject.DeleteSubjectResponse, error) {
 	return subjectHandler.subjectController.DeleteSubject(ctx, deleteSubjectRequest)
 }
+
+func (subjectHandler *SubjectHandler) SetUserSubjectFavourite(ctx context.Context, setUserSubjectFavouriteRequest *subject.SetUserSubjectFavouriteRequest) (*subject.SetUserSubjectFavouriteResponse, error) {
+	return subjectHandler.subjectController.SetUserSubjectFavourite(ctx, setUserSubjectFavouriteRequest)
+}

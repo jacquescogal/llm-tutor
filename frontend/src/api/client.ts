@@ -18,7 +18,11 @@ export const apiClient = axios.create({
 apiClient.interceptors.response.use(
   response => response, // Pass the response through if no error
   (error: AxiosError) => {
-    if (error.response) {
+    // check for error 400, 401, 403, 404, 500
+    if (error.response?.status === 401) {
+      // Redirect to login page if unauthenticated
+      window.location.href = "/login";
+    } else if (error.response) {
       // Server responded with a status other than 2xx
       const errorData = error.response.data as ApiErrorResponse;  // Type assertion
       throw new Error(errorData.error || "An error occurred");

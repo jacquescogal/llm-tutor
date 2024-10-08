@@ -6,8 +6,8 @@ import (
 	"errors"
 	"fmt"
 	"log"
-	mpb "memory_core/internal/proto/module"
 	"memory_core/internal/proto/common"
+	mpb "memory_core/internal/proto/module"
 	"time"
 )
 
@@ -41,45 +41,49 @@ func (repo *ModuleRepository) CreateModule(ctx context.Context, tx *sql.Tx, modu
 }
 
 // GetPublicModules retrieves all public modules
-func (repo *ModuleRepository) GetPublicModules(ctx context.Context, db *sql.DB, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
+func (repo *ModuleRepository) GetPublicModules(ctx context.Context, db *sql.DB, userId uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullModule, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateModuleOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT module_id, module_name, module_description, is_public, created_time, updated_time
-		FROM module_tab
-		WHERE is_public = 1
-		ORDER BY %s
+		SELECT mt.module_id, mt.module_name, mt.module_description, mt.is_public, mt.created_time, mt.updated_time, 
+		COALESCE(um.user_module_role, 0), COALESCE(um.is_favourite, 0)
+		FROM module_tab mt
+		LEFT JOIN user_module_map_tab um ON mt.module_id = um.module_id AND um.user_id = ?
+		WHERE mt.is_public = 1
+		ORDER BY mt.%s
 		LIMIT ? OFFSET ?
 	`, sanitisedOrderByString)
 
-	rows, err := db.QueryContext(ctx, query, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, userId, pageSize, offset)
 	if err != nil {
 		log.Printf("Error retrieving modules: %v\n", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var modules []*mpb.DBModule
+	var fullModules []*mpb.FullModule
 	for rows.Next() {
-		var dbModule mpb.DBModule
-		err := rows.Scan(&dbModule.ModuleId, &dbModule.ModuleName, &dbModule.ModuleDescription, &dbModule.IsPublic, &dbModule.CreatedTime, &dbModule.UpdatedTime)
+		var fullModule mpb.FullModule
+		fullModule.Module = &mpb.DBModule{}
+		err := rows.Scan(&fullModule.Module.ModuleId, &fullModule.Module.ModuleName, &fullModule.Module.ModuleDescription, &fullModule.Module.IsPublic, &fullModule.Module.CreatedTime, &fullModule.Module.UpdatedTime, &fullModule.UserModuleRole, &fullModule.IsFavourite)
 		if err != nil {
 			log.Printf("Error scanning module: %v\n", err)
 			return nil, err
 		}
-		modules = append(modules, &dbModule)
+		fullModules = append(fullModules, &fullModule)
 	}
 
 	log.Println("Modules retrieved successfully")
-	return modules, nil
+	return fullModules, nil
 }
 
 // GetPrivateModulesByUserId retrieves all private modules for a user
-func (repo *ModuleRepository) GetPrivateModulesByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
+func (repo *ModuleRepository) GetPrivateModulesByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullModule, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateModuleOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT m.module_id, m.module_name, m.module_description, m.is_public, m.created_time, m.updated_time
+		SELECT m.module_id, m.module_name, m.module_description, m.is_public, m.created_time, m.updated_time, 
+		COALESCE(ma.user_module_role, 0), COALESCE(ma.is_favourite, 0)
 		FROM module_tab m
 		JOIN user_module_map_tab ma ON m.module_id = ma.module_id
 		WHERE ma.user_id = ? AND ma.user_module_role != 0
@@ -94,28 +98,30 @@ func (repo *ModuleRepository) GetPrivateModulesByUserId(ctx context.Context, db 
 	}
 	defer rows.Close()
 
-	var modules []*mpb.DBModule
+	var fullModules []*mpb.FullModule
 	for rows.Next() {
-		var dbModule mpb.DBModule
-		err := rows.Scan(&dbModule.ModuleId, &dbModule.ModuleName, &dbModule.ModuleDescription, &dbModule.IsPublic, &dbModule.CreatedTime, &dbModule.UpdatedTime)
+		var fullModule mpb.FullModule
+		fullModule.Module = &mpb.DBModule{}
+		err := rows.Scan(&fullModule.Module.ModuleId, &fullModule.Module.ModuleName, &fullModule.Module.ModuleDescription, &fullModule.Module.IsPublic, &fullModule.Module.CreatedTime, &fullModule.Module.UpdatedTime, &fullModule.UserModuleRole, &fullModule.IsFavourite)
 		if err != nil {
 			log.Printf("Error scanning module: %v\n", err)
 			return nil, err
 		}
-		modules = append(modules, &dbModule)
+		fullModules = append(fullModules, &fullModule)
 	}
 
 	log.Println("Modules retrieved successfully")
-	return modules, nil
+	return fullModules, nil
 }
 
 // GetFavouriteModulesByUserId retrieves all favorite modules for a user
-func (repo *ModuleRepository) GetFavouriteModulesByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
+func (repo *ModuleRepository) GetFavouriteModulesByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullModule, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateModuleOrderByString(orderByField, orderByDirection)
 
 	query := fmt.Sprintf(`
-		SELECT m.module_id, m.module_name, m.module_description, m.is_public, m.created_time, m.updated_time
+		SELECT m.module_id, m.module_name, m.module_description, m.is_public, m.created_time, m.updated_time,
+		COALESCE(ma.user_module_role, 0), COALESCE(ma.is_favourite, 0)
 		FROM module_tab m
 		JOIN user_module_map_tab ma ON m.module_id = ma.module_id
 		WHERE ma.user_id = ? AND ma.is_favourite = 1
@@ -130,34 +136,42 @@ func (repo *ModuleRepository) GetFavouriteModulesByUserId(ctx context.Context, d
 	}
 	defer rows.Close()
 
-	var modules []*mpb.DBModule
+	var fullModules []*mpb.FullModule
 	for rows.Next() {
-		var dbModule mpb.DBModule
-		err := rows.Scan(&dbModule.ModuleId, &dbModule.ModuleName, &dbModule.ModuleDescription, &dbModule.IsPublic, &dbModule.CreatedTime, &dbModule.UpdatedTime)
+		var fullModule mpb.FullModule
+		fullModule.Module = &mpb.DBModule{}
+		err := rows.Scan(&fullModule.Module.ModuleId, &fullModule.Module.ModuleName, &fullModule.Module.ModuleDescription, &fullModule.Module.IsPublic, &fullModule.Module.CreatedTime, &fullModule.Module.UpdatedTime, &fullModule.UserModuleRole, &fullModule.IsFavourite)
 		if err != nil {
 			log.Printf("Error scanning module: %v\n", err)
 			return nil, err
 		}
-		modules = append(modules, &dbModule)
+		fullModules = append(fullModules, &fullModule)
 	}
 
 	log.Println("Modules retrieved successfully")
-	return modules, nil
+	return fullModules, nil
 }
 
 // GetModuleById retrieves a module by module_id
-func (repo *ModuleRepository) GetModuleById(ctx context.Context, db *sql.DB, moduleID uint64) (*mpb.DBModule, error) {
+func (repo *ModuleRepository) GetModuleById(ctx context.Context, db *sql.DB, userID, moduleID uint64) (*mpb.FullModule, error) {
 	// returns the module if it is public or the user is a member of the module
 	// TODO: cache this
+	log.Println("GetModuleById HELLO")
 	query := `
-	SELECT module_id, module_name, module_description, is_public, created_time, updated_time
-	FROM module_tab
-	WHERE module_id = ?
+	SELECT mt.module_id, mt.module_name, mt.module_description, mt.is_public, mt.created_time, mt.updated_time, 
+	COALESCE(um.user_module_role, 0), COALESCE(um.is_favourite, 0)
+	FROM module_tab mt
+	LEFT JOIN user_module_map_tab um ON mt.module_id = um.module_id AND um.user_id = ?
+	WHERE mt.module_id = ?
 	`
 
-	row := db.QueryRowContext(ctx, query, moduleID)
-	var dbModule mpb.DBModule
-	err := row.Scan(&dbModule.ModuleId, &dbModule.ModuleName, &dbModule.ModuleDescription, &dbModule.IsPublic, &dbModule.CreatedTime, &dbModule.UpdatedTime)
+	row := db.QueryRowContext(ctx, query, userID, moduleID)
+	log.Println("Query executed")
+	var fullModule mpb.FullModule
+	fullModule.Module = &mpb.DBModule{}
+	log.Println("FullModule created")
+	err := row.Scan(&fullModule.Module.ModuleId, &fullModule.Module.ModuleName, &fullModule.Module.ModuleDescription, &fullModule.Module.IsPublic, &fullModule.Module.CreatedTime, &fullModule.Module.UpdatedTime, &fullModule.UserModuleRole, &fullModule.IsFavourite)
+	log.Println("Row scanned")
 	if err != nil {
 		if errors.Is(err, sql.ErrNoRows) {
 			log.Printf("Module not found: %v\n", err)
@@ -168,11 +182,11 @@ func (repo *ModuleRepository) GetModuleById(ctx context.Context, db *sql.DB, mod
 	}
 
 	log.Println("Module retrieved successfully")
-	return &dbModule, nil
+	return &fullModule, nil
 }
 
 // GetModulesBySubjectId retrieves all modules by subject_id
-func (repo *ModuleRepository) GetModulesBySubjectId(ctx context.Context, db *sql.DB, subjectID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
+func (repo *ModuleRepository) GetModulesBySubjectId(ctx context.Context, db *sql.DB, userID, subjectID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullModule, error) {
 	// if subject owns the module, return the module
 	// if module is private, the mapper will not exist
 	offset := pageOffset(pageNumber, pageSize)
@@ -183,66 +197,72 @@ func (repo *ModuleRepository) GetModulesBySubjectId(ctx context.Context, db *sql
 			FROM subject_module_map_tab
 			WHERE subject_id = ?
 		)
-		SELECT t.module_id, t.module_name, t.module_description, is_public, t.created_time, t.updated_time
+		SELECT t.module_id, t.module_name, t.module_description, is_public, t.created_time, t.updated_time, 
+		COALESCE(um.user_module_role, 0), COALESCE(um.is_favourite, 0)
 		FROM module_tab t
 		JOIN stm ON t.module_id = stm.module_id
+		LEFT JOIN user_module_map_tab um ON t.module_id = um.module_id AND um.user_id = ?
 		ORDER BY t.%s
 		LIMIT ? OFFSET ?
 	`, sanitisedOrderByString)
 
-	rows, err := db.QueryContext(ctx, query, subjectID, pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, subjectID, userID, pageSize, offset)
 	if err != nil {
 		log.Printf("Error retrieving modules: %v\n", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var modules []*mpb.DBModule
+	var fullModules []*mpb.FullModule
 	for rows.Next() {
-		var dbModule mpb.DBModule
-		err := rows.Scan(&dbModule.ModuleId, &dbModule.ModuleName, &dbModule.ModuleDescription, &dbModule.CreatedTime, &dbModule.UpdatedTime)
+		var fullModule mpb.FullModule
+		fullModule.Module = &mpb.DBModule{}
+		err := rows.Scan(&fullModule.Module.ModuleId, &fullModule.Module.ModuleName, &fullModule.Module.ModuleDescription, &fullModule.Module.IsPublic, &fullModule.Module.CreatedTime, &fullModule.Module.UpdatedTime, &fullModule.UserModuleRole, &fullModule.IsFavourite)
 		if err != nil {
 			log.Printf("Error scanning module: %v\n", err)
 			return nil, err
 		}
-		modules = append(modules, &dbModule)
+		fullModules = append(fullModules, &fullModule)
 	}
 
 	log.Println("Modules retrieved successfully")
-	return modules, nil
+	return fullModules, nil
 }
 
-func (repo *ModuleRepository) GetPublicModulesByNameSearch(ctx context.Context, db *sql.DB, moduleNameSearch string, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBModule, error) {
+func (repo *ModuleRepository) GetPublicModulesByNameSearch(ctx context.Context, db *sql.DB, userId uint64, moduleNameSearch string, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.FullModule, error) {
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateModuleOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT t.module_id, t.module_name, t.module_description, t.is_public, t.created_time, t.updated_time
+		SELECT t.module_id, t.module_name, t.module_description, t.is_public, t.created_time, t.updated_time, 
+		COALESCE(um.user_module_role, 0), COALESCE(um.is_favourite, 0)
 		FROM module_tab t
+		LEFT JOIN user_module_map_tab um ON t.module_id = um.module_id AND um.user_id = ?
 		WHERE t.module_name LIKE ? AND t.is_public = 1
 		ORDER BY t.%s
 		LIMIT ? OFFSET ?
 	`, sanitisedOrderByString)
 
-	rows, err := db.QueryContext(ctx, query, "%"+moduleNameSearch+"%", pageSize, offset)
+	rows, err := db.QueryContext(ctx, query, userId, "%"+moduleNameSearch+"%", pageSize, offset)
 	if err != nil {
 		log.Printf("Error retrieving modules: %v\n", err)
 		return nil, err
 	}
 	defer rows.Close()
 
-	var modules []*mpb.DBModule
+	var fullModules []*mpb.FullModule
 	for rows.Next() {
-		var dbModule mpb.DBModule
-		err := rows.Scan(&dbModule.ModuleId, &dbModule.ModuleName, &dbModule.ModuleDescription, &dbModule.IsPublic, &dbModule.CreatedTime, &dbModule.UpdatedTime)
+		var fullModule mpb.FullModule
+		fullModule.Module = &mpb.DBModule{}
+		err := rows.Scan(&fullModule.Module.ModuleId, &fullModule.Module.ModuleName, &fullModule.Module.ModuleDescription, &fullModule.Module.IsPublic, &fullModule.Module.CreatedTime, &fullModule.Module.UpdatedTime, &fullModule.UserModuleRole, &fullModule.IsFavourite)
 		if err != nil {
 			log.Printf("Error scanning module: %v\n", err)
 			return nil, err
 		}
-		modules = append(modules, &dbModule)
+		fullModules = append(fullModules, &fullModule)
 	}
 
 	log.Println("Modules retrieved successfully")
-	return modules, nil
+	return fullModules, nil
 }
 
 // UpdateModule updates a module by module_id
@@ -340,7 +360,7 @@ func (repo *ModuleRepository) DeleteModule(ctx context.Context, tx *sql.Tx, modu
 
 // UserModuleMap
 
-func (repo *ModuleRepository) GetUserModuleMapping(ctx context.Context, tx *sql.Tx, userID, moduleID uint64) error{
+func (repo *ModuleRepository) GetUserModuleMapping(ctx context.Context, tx *sql.Tx, userID, moduleID uint64) error {
 	query := `
 		SELECT user_module_role, is_favourite
 		FROM user_module_map_tab

@@ -3,6 +3,7 @@ import React, { useRef } from "react";
 type Props = {
   buttonName: string;
   children: React.ReactNode;
+  className?: string;
 };
 
 const ModalButton = (props: Props) => {
@@ -17,7 +18,7 @@ const ModalButton = (props: Props) => {
 
   return (
     <>
-      <button onClick={openModal}>
+      <button className={props.className} onClick={openModal}>
         {props.buttonName}
       </button>
       <dialog id="my_modal_1" className="modal" ref={modalRef}>

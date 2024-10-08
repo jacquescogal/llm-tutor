@@ -18,22 +18,17 @@ func NewUserSubjectMapRepository(cacheStore *cache.CacheStore) *UserSubjectMapRe
 	return &UserSubjectMapRepository{cacheStore: cacheStore}
 }
 
-// PutUserSubjectMapping inserts a new user subject mapping into user_subject_map_tab or updates an existing one
-func (repo *UserSubjectMapRepository) PutUserSubjectMapping(ctx context.Context, tx *sql.Tx, userId, subjectId uint64, role common.UserSubjectRole, isFavourite bool) error {
+// PutUserSubjectMappingFavourite inserts a new user subject mapping into user_subject_map_tab or updates an existing one
+func (repo *UserSubjectMapRepository) PutUserSubjectMappingFavourite(ctx context.Context, tx *sql.Tx, userId, subjectId uint64, isFavourite bool) error {
 	// either one of user_subject_role or is_favourite will be put
 	ifDuplicateString := "is_favourite = VALUES(is_favourite)"
-
-	if role != common.UserSubjectRole_USER_SUBJECT_ROLE_UNDEFINED {
-		ifDuplicateString = "user_subject_role = VALUES(user_subject_role)"
-	}
-
 	query := fmt.Sprintf(`
-		INSERT INTO user_subject_map_tab (user_id, subject_id, user_subject_role, is_favourite)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO user_subject_map_tab (user_id, subject_id, is_favourite)
+		VALUES (?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 		%s`, ifDuplicateString)
 
-	_, err := tx.ExecContext(ctx, query, userId, subjectId, role, isFavourite)
+	_, err := tx.ExecContext(ctx, query, userId, subjectId, isFavourite)
 	if err != nil {
 		log.Printf("Error putting user subject mapping: %v\n", err)
 		return err
@@ -41,6 +36,26 @@ func (repo *UserSubjectMapRepository) PutUserSubjectMapping(ctx context.Context,
 	log.Println("Put user subject mapping successfully")
 	return nil
 }
+
+func (repo *UserSubjectMapRepository) PutUserSubjectMappingRole(ctx context.Context, tx *sql.Tx, userId, subjectId uint64, role common.UserSubjectRole) error {
+	ifDuplicateString := "user_subject_role = VALUES(user_subject_role)"
+
+
+	query := fmt.Sprintf(`
+		INSERT INTO user_subject_map_tab (user_id, subject_id, user_subject_role)
+		VALUES (?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+		%s`, ifDuplicateString)
+
+	_, err := tx.ExecContext(ctx, query, userId, subjectId, role)
+	if err != nil {
+		log.Printf("Error putting user subject mapping: %v\n", err)
+		return err
+	}
+	log.Println("Put user subject mapping successfully")
+	return nil
+}
+
 
 // GetUserSubjectMapping retrieves a user subject mapping by user_id and subject_id
 func (repo *UserSubjectMapRepository) GetUserSubjectMapping(ctx context.Context, db *sql.DB, userId, subjectId uint64) (*mpb.DBUserSubjectMap, error) {

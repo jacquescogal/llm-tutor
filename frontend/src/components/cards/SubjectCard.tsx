@@ -1,17 +1,30 @@
 import React from "react";
 import { useNavigate } from "react-router-dom";
+import { setUserSubjectFavourite } from "../../api/subjectService";
 
 type Props = {
   title: string;
   subjectId: string;
-  createdBy: string;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
+  isFavourite: boolean;
 };
 
 const SubjectCard = (props: Props) => {
-  const [isFavourite, setIsFavourite] = React.useState(false);
+  const [isFavourite, setIsFavourite] = React.useState(props.isFavourite);
   const nav = useNavigate();
+
+  const onFavouriteClick = async () => {
+    try {
+      console.log(isFavourite)
+      const response = await setUserSubjectFavourite({ subject_id: Number(props.subjectId), is_favourite: !isFavourite });
+      console.log(response)
+      setIsFavourite(!isFavourite);
+    } catch (e) {
+      console.log(e);
+    }
+  }
   return (
     <div
       className="
@@ -39,10 +52,12 @@ const SubjectCard = (props: Props) => {
       </div>
       <div className="flex flex-row justify-between align-middle content-center text-center align-center ">
         <div className="w-full flex flex-row text-left text-xs justify-between select-none text-gray-500">
-          <div className="flex flex-col justify-between  w-full">
+          
+          {props.createdBy && <div className="flex flex-col justify-between  w-full">
             <span>Owned By: </span>
             <span>{props.createdBy}</span>
           </div>
+}
           <div className="flex flex-col justify-between  w-full">
             <span>Created At: </span>
             <span>{props.createdAt}</span>
@@ -64,7 +79,7 @@ const SubjectCard = (props: Props) => {
         <Heart
           isFavourite={isFavourite}
           onClick={() => {
-            setIsFavourite(!isFavourite);
+            onFavouriteClick();
           }}/>
       </div>
     </div>

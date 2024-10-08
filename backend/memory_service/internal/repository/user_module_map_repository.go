@@ -19,21 +19,43 @@ func NewUserModuleMapRepository(cacheStore *cache.CacheStore) *UserModuleMapRepo
 }
 
 // PutUserModuleMapping inserts a new user module mapping into user_module_map_tab or updates an existing one
-func (repo *UserModuleMapRepository) PutUserModuleMapping(ctx context.Context, tx *sql.Tx, userId, moduleId uint64, role common.UserModuleRole, isFavourite bool) error {
+func (repo *UserModuleMapRepository) PutUserModuleMappingFavourite(ctx context.Context, tx *sql.Tx, userId, moduleId uint64, isFavourite bool) error {
 	// either one of user_module_role or is_favourite will be put
 	ifDuplicateString := "is_favourite = VALUES(is_favourite)"
+	fmt.Println("ifDuplicateString", ifDuplicateString, "userId", userId, "moduleId", moduleId, "isFavourite", isFavourite)
 
-	if role != common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED {
-		ifDuplicateString = "user_module_role = VALUES(user_module_role)"
-	}
+	// if role != common.UserModuleRole_USER_MODULE_ROLE_UNDEFINED {
+	// 	ifDuplicateString = "user_module_role = VALUES(user_module_role)"
+	// }
 
 	query := fmt.Sprintf(`
-		INSERT INTO user_module_map_tab (user_id, module_id, user_module_role, is_favourite)
-		VALUES (?, ?, ?, ?)
+		INSERT INTO user_module_map_tab (user_id, module_id, is_favourite)
+		VALUES (?, ?, ?)
 		ON DUPLICATE KEY UPDATE
 		%s`, ifDuplicateString)
 
-	_, err := tx.ExecContext(ctx, query, userId, moduleId, role, isFavourite)
+	_, err := tx.ExecContext(ctx, query, userId, moduleId, isFavourite)
+	if err != nil {
+		log.Printf("Error putting user module mapping: %v\n", err)
+		return err
+	}
+	log.Println("Put user module mapping successfully")
+	return nil
+}
+
+// PutUserModuleMapping inserts a new user module mapping into user_module_map_tab or updates an existing one
+func (repo *UserModuleMapRepository) PutUserModuleMappingRole(ctx context.Context, tx *sql.Tx, userId, moduleId uint64, role common.UserModuleRole) error {
+
+	ifDuplicateString := "user_module_role = VALUES(user_module_role)"
+
+
+	query := fmt.Sprintf(`
+		INSERT INTO user_module_map_tab (user_id, module_id, user_module_role)
+		VALUES (?, ?, ?)
+		ON DUPLICATE KEY UPDATE
+		%s`, ifDuplicateString)
+
+	_, err := tx.ExecContext(ctx, query, userId, moduleId, role)
 	if err != nil {
 		log.Printf("Error putting user module mapping: %v\n", err)
 		return err

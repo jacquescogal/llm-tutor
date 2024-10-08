@@ -101,3 +101,12 @@ func (h *ModuleHandler) DeleteModule(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Module deleted successfully"})
 }
 
+func (h *ModuleHandler) SetUserModuleFavourite(c *gin.Context) {
+	// Call the controller to handle SetUserModuleFavourite logic
+	err := h.controller.SetUserModuleFavourite(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "User module favourite set successfully"})
+}

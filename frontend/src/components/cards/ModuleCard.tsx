@@ -1,18 +1,31 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { setUserModuleFavourite } from "../../api/moduleService";
 
 type Props = {
   title: string;
   moduleId: string;
-  createdBy: string;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
+  isFavourite: boolean;
 };
 
 const ModuleCard = (props: Props) => {
-  const [isFavourite, setIsFavourite] = React.useState(false);
+  const [isFavourite, setIsFavourite] = React.useState(props.isFavourite);
   const nav = useNavigate();
   const location = useLocation();
+
+  const onFavouriteClick = async () => {
+    try {
+      console.log(isFavourite)
+      const response = await setUserModuleFavourite({ module_id: Number(props.moduleId), is_favourite: !isFavourite });
+      console.log(response)
+      setIsFavourite(!isFavourite);
+    } catch (e) {
+      console.log(e);
+    }
+  }
   return (
     <div
       className="
@@ -40,10 +53,10 @@ const ModuleCard = (props: Props) => {
       </div>
       <div className="flex flex-row justify-between align-middle content-center text-center align-center ">
         <div className="w-full flex flex-row text-left text-xs justify-between select-none text-gray-500">
-          <div className="flex flex-col justify-between  w-full">
+          {props.createdBy && <div className="flex flex-col justify-between  w-full">
             <span>Owned By: </span>
             <span>{props.createdBy}</span>
-          </div>
+          </div>}
           <div className="flex flex-col justify-between  w-full">
             <span>Created At: </span>
             <span>{props.createdAt}</span>
@@ -63,7 +76,7 @@ const ModuleCard = (props: Props) => {
         <Heart
           isFavourite={isFavourite}
           onClick={() => {
-            setIsFavourite(!isFavourite);
+            onFavouriteClick();
           }}/>
       </div>
     </div>

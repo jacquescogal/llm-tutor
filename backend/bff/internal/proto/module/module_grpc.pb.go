@@ -30,6 +30,8 @@ const (
 	ModuleService_GetModulesByNameSearch_FullMethodName      = "/module.ModuleService/GetModulesByNameSearch"
 	ModuleService_UpdateModule_FullMethodName                = "/module.ModuleService/UpdateModule"
 	ModuleService_DeleteModule_FullMethodName                = "/module.ModuleService/DeleteModule"
+	ModuleService_SetUserModuleFavourite_FullMethodName      = "/module.ModuleService/SetUserModuleFavourite"
+	ModuleService_SetUserModuleRole_FullMethodName           = "/module.ModuleService/SetUserModuleRole"
 )
 
 // ModuleServiceClient is the client API for ModuleService service.
@@ -45,6 +47,8 @@ type ModuleServiceClient interface {
 	GetModulesByNameSearch(ctx context.Context, in *GetModulesByNameSearchRequest, opts ...grpc.CallOption) (*GetModulesByNameSearchResponse, error)
 	UpdateModule(ctx context.Context, in *UpdateModuleRequest, opts ...grpc.CallOption) (*UpdateModuleResponse, error)
 	DeleteModule(ctx context.Context, in *DeleteModuleRequest, opts ...grpc.CallOption) (*DeleteModuleResponse, error)
+	SetUserModuleFavourite(ctx context.Context, in *SetUserModuleFavouriteRequest, opts ...grpc.CallOption) (*SetUserModuleFavouriteResponse, error)
+	SetUserModuleRole(ctx context.Context, in *SetUserModuleRoleRequest, opts ...grpc.CallOption) (*SetUserModuleRoleResponse, error)
 }
 
 type moduleServiceClient struct {
@@ -145,6 +149,26 @@ func (c *moduleServiceClient) DeleteModule(ctx context.Context, in *DeleteModule
 	return out, nil
 }
 
+func (c *moduleServiceClient) SetUserModuleFavourite(ctx context.Context, in *SetUserModuleFavouriteRequest, opts ...grpc.CallOption) (*SetUserModuleFavouriteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetUserModuleFavouriteResponse)
+	err := c.cc.Invoke(ctx, ModuleService_SetUserModuleFavourite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *moduleServiceClient) SetUserModuleRole(ctx context.Context, in *SetUserModuleRoleRequest, opts ...grpc.CallOption) (*SetUserModuleRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetUserModuleRoleResponse)
+	err := c.cc.Invoke(ctx, ModuleService_SetUserModuleRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // ModuleServiceServer is the server API for ModuleService service.
 // All implementations must embed UnimplementedModuleServiceServer
 // for forward compatibility.
@@ -158,6 +182,8 @@ type ModuleServiceServer interface {
 	GetModulesByNameSearch(context.Context, *GetModulesByNameSearchRequest) (*GetModulesByNameSearchResponse, error)
 	UpdateModule(context.Context, *UpdateModuleRequest) (*UpdateModuleResponse, error)
 	DeleteModule(context.Context, *DeleteModuleRequest) (*DeleteModuleResponse, error)
+	SetUserModuleFavourite(context.Context, *SetUserModuleFavouriteRequest) (*SetUserModuleFavouriteResponse, error)
+	SetUserModuleRole(context.Context, *SetUserModuleRoleRequest) (*SetUserModuleRoleResponse, error)
 	mustEmbedUnimplementedModuleServiceServer()
 }
 
@@ -194,6 +220,12 @@ func (UnimplementedModuleServiceServer) UpdateModule(context.Context, *UpdateMod
 }
 func (UnimplementedModuleServiceServer) DeleteModule(context.Context, *DeleteModuleRequest) (*DeleteModuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteModule not implemented")
+}
+func (UnimplementedModuleServiceServer) SetUserModuleFavourite(context.Context, *SetUserModuleFavouriteRequest) (*SetUserModuleFavouriteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetUserModuleFavourite not implemented")
+}
+func (UnimplementedModuleServiceServer) SetUserModuleRole(context.Context, *SetUserModuleRoleRequest) (*SetUserModuleRoleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetUserModuleRole not implemented")
 }
 func (UnimplementedModuleServiceServer) mustEmbedUnimplementedModuleServiceServer() {}
 func (UnimplementedModuleServiceServer) testEmbeddedByValue()                       {}
@@ -378,6 +410,42 @@ func _ModuleService_DeleteModule_Handler(srv interface{}, ctx context.Context, d
 	return interceptor(ctx, in, info, handler)
 }
 
+func _ModuleService_SetUserModuleFavourite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetUserModuleFavouriteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModuleServiceServer).SetUserModuleFavourite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ModuleService_SetUserModuleFavourite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModuleServiceServer).SetUserModuleFavourite(ctx, req.(*SetUserModuleFavouriteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModuleService_SetUserModuleRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetUserModuleRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModuleServiceServer).SetUserModuleRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ModuleService_SetUserModuleRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModuleServiceServer).SetUserModuleRole(ctx, req.(*SetUserModuleRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // ModuleService_ServiceDesc is the grpc.ServiceDesc for ModuleService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -420,6 +488,14 @@ var ModuleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteModule",
 			Handler:    _ModuleService_DeleteModule_Handler,
+		},
+		{
+			MethodName: "SetUserModuleFavourite",
+			Handler:    _ModuleService_SetUserModuleFavourite_Handler,
+		},
+		{
+			MethodName: "SetUserModuleRole",
+			Handler:    _ModuleService_SetUserModuleRole_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

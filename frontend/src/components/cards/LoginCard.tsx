@@ -30,7 +30,7 @@ const LoginCard = () => {
   const onRegisterClick = async () => {
     try {
       await createUser({ username, password });
-      nav("/dashboard/explore/subject");
+      await onLoginClick();
     } catch (e) {
       if (e instanceof Error) {
         setError(e.message);

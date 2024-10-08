@@ -102,3 +102,13 @@ func (h *SubjectHandler) DeleteSubject(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Subject deleted successfully"})
 }
+
+func (h *SubjectHandler) SetUserSubjectFavourite(c *gin.Context) {
+	// Call the controller to handle SetUserSubjectFavourite logic
+	err := h.controller.SetUserSubjectFavourite(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Subject favourited successfully"})
+}

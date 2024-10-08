@@ -42,6 +42,11 @@ func (c *ModuleController) CreateModule(ctx *gin.Context) error {
 }
 
 func (c *ModuleController) GetPublicModules(ctx *gin.Context) (*module.GetPublicModulesResponse, error) {
+	userSession,err := getUserSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userId := userSession.UserId
 	pageNumber, err := getUint32FromString(ctx.DefaultQuery(QUERY_PAGE_NUMBER, "1"))
 	if err != nil {
 		return nil, err
@@ -55,6 +60,7 @@ func (c *ModuleController) GetPublicModules(ctx *gin.Context) (*module.GetPublic
 		return nil, err
 	}
 	req := module.GetPublicModulesRequest{
+		UserId: userId,
 		PageNumber: pageNumber,
 		PageSize: c.pagseSize,
 		OrderByField: common.ORDER_BY_FIELD(orderByField),
@@ -230,4 +236,21 @@ func (c *ModuleController) DeleteModule(ctx *gin.Context) error {
 	req.UserId = userId
 	req.ModuleId = moduleId
 	return c.moduleService.DeleteModule(ctx, &req)
+}
+
+func (c *ModuleController) SetUserModuleFavourite(ctx *gin.Context) error {
+	userSession,err := getUserSession(ctx)
+	if err != nil {
+		return err
+	}
+	moduleId, err := getUint64FromString(ctx.Param("module_id"))
+	if err != nil {
+		return err
+	}
+	userId := userSession.UserId
+	var req module.SetUserModuleFavouriteRequest
+	ctx.Bind(&req)
+	req.UserId = userId
+	req.ModuleId = moduleId
+	return c.moduleService.SetUserModuleFavourite(ctx, &req)
 }

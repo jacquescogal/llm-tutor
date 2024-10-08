@@ -84,3 +84,11 @@ func (s *SubjectService) DeleteSubject(ctx context.Context, req *subject.DeleteS
 	}
 	return nil
 }
+
+func (s *SubjectService) SetUserSubjectFavourite(ctx context.Context, req *subject.SetUserSubjectFavouriteRequest) error {
+	_, err := s.client.SetUserSubjectFavourite(ctx, req)
+	if err != nil {
+		return HandleGRPCError(err)
+	}
+	return nil
+}

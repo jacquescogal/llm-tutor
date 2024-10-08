@@ -19,6 +19,9 @@ service ModuleService {
   rpc GetModulesByNameSearch (GetModulesByNameSearchRequest) returns (GetModulesByNameSearchResponse);
   rpc UpdateModule (UpdateModuleRequest) returns (UpdateModuleResponse);
   rpc DeleteModule (DeleteModuleRequest) returns (DeleteModuleResponse);
+
+  rpc SetUserModuleFavourite (SetUserModuleFavouriteRequest) returns (SetUserModuleFavouriteResponse);
+  rpc SetUserModuleRole (SetUserModuleRoleRequest) returns (SetUserModuleRoleResponse);
 }
 
 
@@ -34,14 +37,15 @@ message CreateModuleRequest {
   }
 
   message GetPublicModulesRequest {
-    uint32 page_number = 1;
-    uint32 page_size = 2;
-    common.ORDER_BY_FIELD order_by_field = 3;
-    common.ORDER_BY_DIRECTION order_by_direction = 4;
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
   }
 
   message GetPublicModulesResponse {
-    repeated DBModule modules = 1;
+    repeated FullModule modules = 1;
   }
 
   message GetPrivateModulesByUserIdRequest {
@@ -53,7 +57,7 @@ message CreateModuleRequest {
   }
 
   message GetPrivateModulesByUserIdResponse {
-    repeated DBModule modules = 1;
+    repeated FullModule modules = 1;
   }
 
   message GetFavouriteModulesByUserIdRequest {
@@ -65,7 +69,7 @@ message CreateModuleRequest {
   }
 
   message GetFavouriteModulesByUserIdResponse {
-    repeated DBModule modules = 1;
+    repeated FullModule modules = 1;
   }
   
   message GetModuleByIdRequest {
@@ -74,7 +78,7 @@ message CreateModuleRequest {
   }
   
   message GetModuleByIdResponse {
-    DBModule module = 1;
+    FullModule module = 1;
   }
   
   message GetModulesBySubjectIdRequest {
@@ -87,7 +91,7 @@ message CreateModuleRequest {
   }
   
   message GetModulesBySubjectIdResponse {
-    repeated DBModule modules = 1;
+    repeated FullModule modules = 1;
   }
   
   message GetModulesByNameSearchRequest {
@@ -100,7 +104,7 @@ message CreateModuleRequest {
   }
   
   message GetModulesByNameSearchResponse {
-    repeated DBModule modules = 1;
+    repeated FullModule modules = 1;
   }
   
   message UpdateModuleRequest {
@@ -120,6 +124,31 @@ message CreateModuleRequest {
   }
   
   message DeleteModuleResponse {
+  }
+
+  message SetUserModuleFavouriteRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    bool is_favourite = 3;
+  }
+
+  message SetUserModuleFavouriteResponse {
+  }
+
+  message SetUserModuleRoleRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    common.UserModuleRole user_module_role = 3;
+  }
+
+  message SetUserModuleRoleResponse {
+  }
+
+  // Consolidated Models
+  message FullModule {
+    DBModule module = 1;
+    common.UserModuleRole user_module_role = 2;
+    bool is_favourite = 3;
   }
 
 

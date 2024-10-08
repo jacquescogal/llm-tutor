@@ -1,3 +1,4 @@
+import { OrderByDirection, OrderByField } from "../types/enums";
 import { apiClient } from "./client";
 
 
@@ -45,9 +46,10 @@ export const getDocumentById = async (
 };
 
 export interface GetDocumentsByModuleIdPayload {
+    module_id: number;
   page_number: number;
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export interface GetDocumentsByModuleIdResponse {
@@ -55,18 +57,19 @@ export interface GetDocumentsByModuleIdResponse {
 }
 
 export const getDocumentsByModuleId = async (
-  module_id: number,
   payload: GetDocumentsByModuleIdPayload
 ): Promise<GetDocumentsByModuleIdResponse> => {
-  const response = await apiClient.get(`/module/${module_id}/document`, { params: payload });
+    const { module_id, ...rest } = payload;
+
+  const response = await apiClient.get(`/module/${module_id}/document`, { params: rest });
   return response.data;
 };
 
 export interface GetDocumentsByNameSearchPayload {
   search_query: string;
   page_number: number;
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export interface GetDocumentsByNameSearchResponse {

@@ -88,6 +88,7 @@ func main() {
 	r.GET("/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.GetSubjectById)
 	r.GET("/user/subject", handlers.SessionMiddleware(authService), subjectHandler.GetSubjectsByUserID)
 	r.POST("/search/subject", handlers.SessionMiddleware(authService), subjectHandler.GetSubjectsByNameSearch)
+	r.POST("/favourite/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.SetUserSubjectFavourite)
 	r.PUT("/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.UpdateSubject)
 	r.DELETE("/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.DeleteSubject)
 
@@ -99,6 +100,7 @@ func main() {
 	r.GET("/module/:module_id", handlers.SessionMiddleware(authService), moduleHandler.GetModuleById)
 	r.GET("/subject/:subject_id/module", handlers.SessionMiddleware(authService), moduleHandler.GetModulesBySubjectId)
 	r.POST("/search/module", handlers.SessionMiddleware(authService), moduleHandler.GetModulesByNameSearch)
+	r.POST("/favourite/module/:module_id", handlers.SessionMiddleware(authService), moduleHandler.SetUserModuleFavourite)
 	// r.POST("/search/subject/:subject_id/module", handlers.SessionMiddleware(authService), moduleHandler.GetSubjectModulesByNameSearch)
 	r.PUT("/module/:module_id", handlers.SessionMiddleware(authService), moduleHandler.UpdateModule)
 	r.DELETE("/module/:module_id", handlers.SessionMiddleware(authService), moduleHandler.DeleteModule)

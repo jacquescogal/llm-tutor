@@ -1,3 +1,4 @@
+import { OrderByDirection, OrderByField } from "../types/enums";
 import { apiClient } from "./client";
 
 // Payload and Response Interfaces
@@ -48,8 +49,8 @@ export interface GetQuestionsByDocIdPayload {
   user_id: number;
   page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export interface GetQuestionsByDocIdResponse {
@@ -72,8 +73,8 @@ export interface GetQuestionsByQuestionTitleSearchPayload {
   search_query: string;
   page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export interface GetQuestionsByQuestionTitleSearchResponse {

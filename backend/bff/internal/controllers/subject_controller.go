@@ -11,7 +11,7 @@ import (
 
 type SubjectController struct{
 	subjectService *services.SubjectService
-	pagseSize uint32
+	pageSize uint32
 }
 
 func NewSubjectController(subjectService *services.SubjectService) *SubjectController {
@@ -25,7 +25,7 @@ func NewSubjectController(subjectService *services.SubjectService) *SubjectContr
 		// fatal error on start up
 		panic(err)
 	}
-	return &SubjectController{subjectService: subjectService, pagseSize: pageSize}
+	return &SubjectController{subjectService: subjectService, pageSize: pageSize}
 }
 
 func (c *SubjectController) CreateSubject(ctx *gin.Context) error {
@@ -41,6 +41,11 @@ func (c *SubjectController) CreateSubject(ctx *gin.Context) error {
 }
 
 func (c *SubjectController) GetPublicSubjects(ctx *gin.Context) (*subject.GetPublicSubjectsResponse, error) {
+	userSession,err := getUserSession(ctx)
+	if err != nil {
+		return nil, err
+	}
+	userId := userSession.UserId
 	pageNumber, err := getUint32FromString(ctx.DefaultQuery(QUERY_PAGE_NUMBER, "1"))
 	if err != nil {
 		return nil, err
@@ -54,8 +59,9 @@ func (c *SubjectController) GetPublicSubjects(ctx *gin.Context) (*subject.GetPub
 		return nil, err
 	}
 	req := subject.GetPublicSubjectsRequest{
+		UserId: userId,
 		PageNumber: pageNumber,
-		PageSize: c.pagseSize,
+		PageSize: c.pageSize,
 		OrderByField: common.ORDER_BY_FIELD(orderByField),
 		OrderByDirection: common.ORDER_BY_DIRECTION(orderByDirection),
 	}
@@ -83,7 +89,7 @@ func (c *SubjectController) GetPrivateSubjectsByUserID(ctx *gin.Context) (*subje
 	req := subject.GetPrivateSubjectsByUserIdRequest{
 		UserId: userId,
 		PageNumber: pageNumber,
-		PageSize: c.pagseSize,
+		PageSize: c.pageSize,
 		OrderByField: common.ORDER_BY_FIELD(orderByField),
 		OrderByDirection: common.ORDER_BY_DIRECTION(orderByDirection),
 	}
@@ -111,7 +117,7 @@ func (c *SubjectController) GetFavouriteSubjectsByUserID(ctx *gin.Context) (*sub
 	req := subject.GetFavouriteSubjectsByUserIdRequest{
 		UserId: userId,
 		PageNumber: pageNumber,
-		PageSize: c.pagseSize,
+		PageSize: c.pageSize,
 		OrderByField: common.ORDER_BY_FIELD(orderByField),
 		OrderByDirection: common.ORDER_BY_DIRECTION(orderByDirection),
 	}
@@ -155,7 +161,7 @@ func (c *SubjectController) GetSubjectsByUserID(ctx *gin.Context) (*subject.GetS
 	req := subject.GetSubjectsByUserIdRequest{
 		UserId: userId,
 		PageNumber: pageNumber,
-		PageSize: c.pagseSize,
+		PageSize: c.pageSize,
 		OrderByField: common.ORDER_BY_FIELD(orderByField),
 		OrderByDirection: common.ORDER_BY_DIRECTION(orderByDirection),
 	}
@@ -184,7 +190,7 @@ func (c *SubjectController) GetSubjectsByNameSearch(ctx *gin.Context) (*subject.
 	ctx.Bind(&req)
 	req.UserId = userId
 	req.PageNumber = pageNumber
-	req.PageSize = c.pagseSize
+	req.PageSize = c.pageSize
 	req.OrderByField = common.ORDER_BY_FIELD(orderByField)
 	req.OrderByDirection = common.ORDER_BY_DIRECTION(orderByDirection)
 	return c.subjectService.GetSubjectsByNameSearch(ctx, &req)
@@ -222,4 +228,21 @@ func (c *SubjectController) DeleteSubject(ctx *gin.Context) error {
 	req.UserId = userId
 	req.SubjectId = subjectId
 	return c.subjectService.DeleteSubject(ctx, &req)
+}
+
+func (c *SubjectController) SetUserSubjectFavourite(ctx *gin.Context) error {
+	userSession,err := getUserSession(ctx)
+	if err != nil {
+		return err
+	}
+	userId := userSession.UserId
+	subjectId, err := getUint64FromString(ctx.Param("subject_id"))
+	if err != nil {
+		return err
+	}
+	var req subject.SetUserSubjectFavouriteRequest
+	ctx.Bind(&req)
+	req.UserId = userId
+	req.SubjectId = subjectId
+	return c.subjectService.SetUserSubjectFavourite(ctx, &req)
 }

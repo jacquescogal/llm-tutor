@@ -46,3 +46,7 @@ export const createUser = async (
   });
   return response.data;
 };
+
+export const deleteSession = async (): Promise<void> => {
+  await apiClient.delete("/session");
+}

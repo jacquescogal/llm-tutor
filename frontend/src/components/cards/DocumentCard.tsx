@@ -4,11 +4,11 @@ import { useLocation, useNavigate } from "react-router-dom";
 type Props = {
   title: string;
   documentId: string;
-  createdBy: string;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
-  memoryCount: number;
-  questionCount: number;
+  memoryCount?: number;
+  questionCount?: number;
 };
 
 const DocumentCard = (props: Props) => {
@@ -38,6 +38,9 @@ const DocumentCard = (props: Props) => {
           #{props.documentId.padStart(8, "0")}
         </span>
       </div>
+      {
+        props.memoryCount && props.questionCount && (
+      
       <div className="w-full flex flex-row text-left text-xs justify-between select-none text-gray-500 bg-info text-info-content p-1">
         <div className="flex flex-row  w-full">
           <span className="font-bold mr-1">Memory Count:</span>
@@ -48,12 +51,17 @@ const DocumentCard = (props: Props) => {
           <span>{props.questionCount}</span>
         </div>
       </div>
+        )}
       <div className="flex flex-row justify-between align-middle content-center text-center align-center ">
         <div className="w-full flex flex-row text-left text-xs justify-between select-none text-gray-500">
+          {
+            props.createdBy && (
+          
           <div className="flex flex-col justify-between  w-full">
             <span>Uploaded By: </span>
             <span>{props.createdBy}</span>
           </div>
+            )}
           <div className="flex flex-col justify-between  w-full">
             <span>Uploaded On: </span>
             <span>{props.createdAt}</span>

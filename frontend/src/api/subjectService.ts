@@ -1,9 +1,9 @@
+import { OrderByDirection, OrderByField, UserSubjectRole } from "../types/enums";
 import { apiClient } from "./client";
 
 // Payload and Response Interfaces
 
 export interface createSubjectPayload {
-  user_id: number;
   subject_name: string;
   subject_description: string;
   is_public: boolean;
@@ -22,13 +22,12 @@ export const createSubject = async (
 
 export interface getPublicSubjectsPayload {
   page_number: number;
-  
-  sort_by: string;
-  order: string;
+  sort_by?: OrderByField;
+  order?: OrderByDirection;
 }
 
 export interface getPublicSubjectsResponse {
-  subjects: DBSubject[];
+  subjects: FullSubject[];
 }
 
 export const getPublicSubjects = async (
@@ -42,12 +41,12 @@ export interface getPrivateSubjectsByUserIdPayload {
   user_id: number;
   page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export interface getPrivateSubjectsByUserIdResponse {
-  subjects: DBSubject[];
+  subjects: FullSubject[];
 }
 
 export const getPrivateSubjectsByUserId = async (
@@ -58,15 +57,14 @@ export const getPrivateSubjectsByUserId = async (
 };
 
 export interface getFavouriteSubjectsByUserIdPayload {
-  user_id: number;
   page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export interface getFavouriteSubjectsByUserIdResponse {
-  subjects: DBSubject[];
+  subjects: FullSubject[];
 }
 
 export const getFavouriteSubjectsByUserId = async (
@@ -77,19 +75,17 @@ export const getFavouriteSubjectsByUserId = async (
 };
 
 export interface getSubjectByIdPayload {
-  user_id: number;
   subject_id: number;
 }
 
 export interface getSubjectByIdResponse {
-  subject: DBSubject;
+  subject: FullSubject;
 }
 
 export const getSubjectById = async (
   payload: getSubjectByIdPayload
 ): Promise<getSubjectByIdResponse> => {
   const response = await apiClient.get(`/subject/${payload.subject_id}`, {
-    params: { user_id: payload.user_id },
   });
   return response.data;
 };
@@ -98,12 +94,12 @@ export interface getSubjectsByUserIdPayload {
   user_id: number;
   page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export interface getSubjectsByUserIdResponse {
-  subjects: DBSubject[];
+  subjects: FullSubject[];
 }
 
 export const getSubjectsByUserId = async (
@@ -113,23 +109,26 @@ export const getSubjectsByUserId = async (
   return response.data;
 };
 
-export interface getSubjectsByNameSearchPayload {
-  user_id: number;
+export interface getSubjectsByNameSearchPayloadJSON {
   search_query: string;
-  page_number: number;
+}
+
+export interface getSubjectsByNameSearchQuery {
+    page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by?: OrderByField;
+  order?: OrderByDirection;
 }
 
 export interface getSubjectsByNameSearchResponse {
-  subjects: DBSubject[];
+  subjects: FullSubject[];
 }
 
 export const getSubjectsByNameSearch = async (
-  payload: getSubjectsByNameSearchPayload
+  payload: getSubjectsByNameSearchPayloadJSON,
+query: getSubjectsByNameSearchQuery
 ): Promise<getSubjectsByNameSearchResponse> => {
-  const response = await apiClient.post("/search/subject", payload);
+const response = await apiClient.post("/search/subject", payload, { params: query });
   return response.data;
 };
 
@@ -170,6 +169,23 @@ export const deleteSubject = async (
   return response.data;
 };
 
+export interface setUserSubjectFavouritePayload {
+    subject_id: number;
+    is_favourite: boolean;
+  }
+  
+  export interface setUserSubjectFavouriteResponse {
+    message: string;
+  }
+  
+  export const setUserSubjectFavourite = async (
+    payload: setUserSubjectFavouritePayload
+  ): Promise<setUserSubjectFavouriteResponse> => {
+    const response = await apiClient.post(`favourite/subject/${payload.subject_id}`, { is_favourite: payload.is_favourite }
+    );
+    return response.data;
+  };
+
 // DBSubject interface
 export interface DBSubject {
   subject_id: number;
@@ -179,3 +195,11 @@ export interface DBSubject {
   created_time: number;
   updated_time: number;
 }
+
+// FullSubject interface
+export interface FullSubject {
+    subject: DBSubject;
+    user_subject_role: UserSubjectRole;
+    is_favourite: boolean;
+  }
+  

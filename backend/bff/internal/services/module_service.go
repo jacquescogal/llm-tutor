@@ -84,3 +84,11 @@ func (s *ModuleService) DeleteModule(ctx context.Context, req *module.DeleteModu
 	}
 	return nil
 }
+
+func (s *ModuleService) SetUserModuleFavourite(ctx context.Context, req *module.SetUserModuleFavouriteRequest) error {
+	_, err := s.client.SetUserModuleFavourite(ctx, req)
+	if err != nil {
+		return HandleGRPCError(err)
+	}
+	return nil
+}

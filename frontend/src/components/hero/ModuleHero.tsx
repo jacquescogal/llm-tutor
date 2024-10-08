@@ -1,17 +1,31 @@
-import React from "react";
+import React, { useEffect } from "react";
+import { setUserModuleFavourite } from "../../api/moduleService";
 
 type Props = {
   title: string;
   description: string;
   moduleId: string;
-  createdBy: string;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
   actionItems?: React.ReactNode[];
+  isFavourite: boolean;
 };
 
 const ModuleHero = (props: Props) => {
-  const [isFavourite, setIsFavourite] = React.useState(false);
+  const [isFavourite, setIsFavourite] = React.useState(props.isFavourite);
+  useEffect(()=>{
+    setIsFavourite(props.isFavourite);
+  },[props.isFavourite])
+
+  const onFavouriteClick = async () => {
+    try {
+      await setUserModuleFavourite({ module_id: Number(props.moduleId), is_favourite: !isFavourite });
+      setIsFavourite(!isFavourite);
+    } catch (e) {
+      console.log(e);
+    }
+  }
   return (
     <div
       className="
@@ -40,10 +54,10 @@ const ModuleHero = (props: Props) => {
       <span className="text-wrap break-words h-36 overflow-scroll bg-slate-50 shadow-inner">{props.description}</span>
       <div className="flex flex-row justify-between align-middle content-center text-center align-center ">
         <div className="w-full flex flex-row text-left text-xs justify-between select-none text-gray-500">
-          <div className="flex flex-col justify-between  w-full">
+          {props.createdBy && <div className="flex flex-col justify-between  w-full">
             <span>Owned By: </span>
             <span>{props.createdBy}</span>
-          </div>
+          </div>}
           <div className="flex flex-col justify-between  w-full">
             <span>Created At: </span>
             <span>{props.createdAt}</span>
@@ -63,7 +77,7 @@ const ModuleHero = (props: Props) => {
         <Heart
           isFavourite={isFavourite}
           onClick={() => {
-            setIsFavourite(!isFavourite);
+            onFavouriteClick();
           }}/>
       </div>
     </div>

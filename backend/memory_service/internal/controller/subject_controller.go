@@ -63,7 +63,7 @@ func (c *SubjectController) CreateSubject(ctx context.Context, req *mpb.CreateSu
 	}
 
 	// create the member access mapping
-	err = c.userSubjectMapRepo.PutUserSubjectMapping(ctx, tx, req.GetUserId(), subjectID, common.UserSubjectRole_USER_SUBJECT_ROLE_OWNER, false)
+	err = c.userSubjectMapRepo.PutUserSubjectMappingRole(ctx, tx, req.GetUserId(), subjectID, common.UserSubjectRole_USER_SUBJECT_ROLE_OWNER)
 	if err != nil {
 		log.Printf("Failed to create member access: %v", err)
 		tx.Rollback()
@@ -81,7 +81,12 @@ func (c *SubjectController) CreateSubject(ctx context.Context, req *mpb.CreateSu
 
 // GetPublicSubjects handles the business logic for retrieving public subjects
 func (c *SubjectController) GetPublicSubjects(ctx context.Context, req *mpb.GetPublicSubjectsRequest) (*mpb.GetPublicSubjectsResponse, error) {
-	subjects, err := c.subjectRepo.GetPublicSubjects(ctx, c.db, req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
+	// validate input
+	if req.GetUserId() == 0 {
+		log.Println("User ID is required")
+		return nil, status.Error(codes.InvalidArgument, "User ID is required")
+	}
+	subjects, err := c.subjectRepo.GetPublicSubjects(ctx, c.db, req.UserId, req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
 	if err != nil {
 		log.Printf("Failed to get public subjects: %v", err)
 		return nil, err
@@ -279,6 +284,44 @@ func (c *SubjectController) DeleteSubject(ctx context.Context, req *mpb.DeleteSu
 	return &mpb.DeleteSubjectResponse{}, nil
 }
 
+func (c *SubjectController) SetUserSubjectFavourite(ctx context.Context, req *mpb.SetUserSubjectFavouriteRequest) (*mpb.SetUserSubjectFavouriteResponse, error) {
+	if req.GetUserId() == 0 {
+		log.Println("User ID is required")
+		return nil, status.Error(codes.InvalidArgument, "User ID is required")
+	} else if req.GetSubjectId() == 0 {
+		log.Println("Subject ID is required")
+		return nil, status.Error(codes.InvalidArgument, "Subject ID is required")
+	}
+
+	// begin transaction
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to begin transaction: %v", err)
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Printf("Recovered from panic: %v", r)
+		}
+	}()
+
+	// set user subject favourite
+	err = c.userSubjectMapRepo.PutUserSubjectMappingFavourite(ctx, tx, req.GetUserId(), req.GetSubjectId(), req.GetIsFavourite())
+	if err != nil {
+		log.Printf("Failed to set user subject favourite: %v", err)
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
+		return nil, err
+	}
+
+	return &mpb.SetUserSubjectFavouriteResponse{}, nil
+}
 func parseAndValidateSubjectName(subjectName string) (string, error) {
 	// strip leading and trailing whitespace
 	subjectName = strings.TrimSpace(subjectName)

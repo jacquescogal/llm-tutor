@@ -1,3 +1,4 @@
+import { OrderByDirection, OrderByField, UserModuleRole } from "../types/enums";
 import { apiClient } from "./client";
 
 // Interfaces for request payloads and responses
@@ -20,12 +21,12 @@ export const createModule = async (
 
 export interface GetModulesRequest {
   page_number: number;
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export interface GetModulesResponse {
-  modules: DBModule[];
+  modules: FullModule[];
 }
 
 export const getPublicModules = async (
@@ -40,8 +41,8 @@ export const getPublicModules = async (
 export interface GetPrivateModulesRequest {
   page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export const getPrivateModulesByUserId = async (
@@ -57,8 +58,8 @@ export interface GetFavouriteModulesRequest {
   
   page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export const getFavouriteModulesByUserId = async (
@@ -76,7 +77,7 @@ export interface GetModuleByIdRequest {
 }
 
 export interface GetModuleByIdResponse {
-  module: DBModule;
+  module: FullModule;
 }
 
 export const getModuleById = async (
@@ -90,35 +91,42 @@ export const getModuleById = async (
 
 export interface GetModulesBySubjectIdRequest {
   
-  subjectId: number;
+  subject_id: number;
   page_number: number;
   
-  sort_by: string;
-  order: string;
+  sort_by: OrderByField;
+  order: OrderByDirection;
 }
 
 export const getModulesBySubjectId = async (
   payload: GetModulesBySubjectIdRequest
 ): Promise<GetModulesResponse> => {
-  const response = await apiClient.get(`/subject/${payload.subjectId}/module`, {
+  const response = await apiClient.get(`/subject/${payload.subject_id}/module`, {
     params: payload,
   });
   return response.data;
 };
 
-export interface GetModulesByNameSearchRequest {
+export interface GetModulesByNameSearchRequestPayloadJSON {
+    search_query: string;
+  }
   
-  searchQuery: string;
-  page_number: number;
+  export interface gGetModulesByNameSearchRequestQuery {
+      page_number: number;
+    
+    sort_by?: OrderByField;
+    order?: OrderByDirection;
+  }
   
-  sort_by: string;
-  order: string;
-}
+
 
 export const getModulesByNameSearch = async (
-  payload: GetModulesByNameSearchRequest
+  payload: GetModulesByNameSearchRequestPayloadJSON,
+    query: gGetModulesByNameSearchRequestQuery
 ): Promise<GetModulesResponse> => {
-  const response = await apiClient.post("/search/module", payload);
+  const response = await apiClient.post("/search/module", payload, {
+    params: query,
+  });
   return response.data;
 };
 
@@ -159,12 +167,37 @@ export const deleteModule = async (
   return response.data;
 };
 
+export interface setUserModuleFavouritePayload {
+    module_id: number;
+    is_favourite: boolean;
+  }
+  
+  export interface setUserModuleFavouriteResponse {
+    message: string;
+  }
+  
+  export const setUserModuleFavourite = async (
+    payload: setUserModuleFavouritePayload
+  ): Promise<setUserModuleFavouriteResponse> => {
+    const response = await apiClient.post(`favourite/module/${payload.module_id}`, { is_favourite: payload.is_favourite }
+    );
+    return response.data;
+  };
+
 // DBModule interface
 export interface DBModule {
   module_id: number;
   module_name: string;
   module_description: string;
   is_public: boolean;
-  createdTime: number;
-  updatedTime: number;
+  created_time: number;
+  updated_time: number;
 }
+
+// FullModule interface
+export interface FullModule {
+    module: DBModule;
+    user_module_role: UserModuleRole;
+    is_favourite: boolean;
+  }
+  

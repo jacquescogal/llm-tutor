@@ -62,3 +62,7 @@ func (moduleHandler *ModuleHandler) UpdateModule(ctx context.Context, updateModu
 func (moduleHandler *ModuleHandler) DeleteModule(ctx context.Context, deleteModuleRequest *module.DeleteModuleRequest) (*module.DeleteModuleResponse, error) {
 	return moduleHandler.moduleController.DeleteModule(ctx, deleteModuleRequest)
 }
+
+func (moduleHandler *ModuleHandler) SetUserModuleFavourite(ctx context.Context, setUserModuleFavouriteRequest *module.SetUserModuleFavouriteRequest) (*module.SetUserModuleFavouriteResponse, error) {
+	return moduleHandler.moduleController.SetUserModuleFavourite(ctx, setUserModuleFavouriteRequest)
+}
