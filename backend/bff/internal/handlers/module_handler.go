@@ -27,9 +27,32 @@ func (h *ModuleHandler) CreateModule(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Module created successfully"})
 }
+func (h *ModuleHandler) GetPublicModules(c *gin.Context) {
+	res, err := h.controller.GetPublicModules(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (h *ModuleHandler) GetPrivateModulesByUserId(c *gin.Context) {
+	res, err := h.controller.GetPrivateModulesByUserId(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+func (h *ModuleHandler) GetFavouriteModulesByUserId(c *gin.Context) {
+	res, err := h.controller.GetFavouriteModulesByUserId(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
 
 func (h *ModuleHandler) GetModuleById(c *gin.Context) {
-	// Call the controller to handle GetModuleById logic
 	res, err := h.controller.GetModuleById(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

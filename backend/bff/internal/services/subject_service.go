@@ -21,6 +21,30 @@ func (s *SubjectService) CreateSubject(ctx context.Context, req *subject.CreateS
 	return nil
 }
 
+func (s *SubjectService) GetPublicSubjects(ctx context.Context, req *subject.GetPublicSubjectsRequest) (*subject.GetPublicSubjectsResponse, error) {
+	resp, err := s.client.GetPublicSubjects(ctx, req)
+	if err != nil {
+		return nil, HandleGRPCError(err)
+	}
+	return resp, nil
+}
+
+func (s *SubjectService) GetPrivateSubjectsByUserID(ctx context.Context, req *subject.GetPrivateSubjectsByUserIdRequest) (*subject.GetPrivateSubjectsByUserIdResponse, error) {
+	resp, err := s.client.GetPrivateSubjectsByUserId(ctx, req)
+	if err != nil {
+		return nil, HandleGRPCError(err)
+	}
+	return resp, nil
+}
+
+func (s *SubjectService) GetFavouriteSubjectsByUserID(ctx context.Context, req *subject.GetFavouriteSubjectsByUserIdRequest) (*subject.GetFavouriteSubjectsByUserIdResponse, error) {
+	resp, err := s.client.GetFavouriteSubjectsByUserId(ctx, req)
+	if err != nil {
+		return nil, HandleGRPCError(err)
+	}
+	return resp, nil
+}
+
 func (s *SubjectService) GetSubjectByID(ctx context.Context, req *subject.GetSubjectByIdRequest) (*subject.GetSubjectByIdResponse, error) {
 	resp, err := s.client.GetSubjectById(ctx, req)
 	if err != nil {

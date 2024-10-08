@@ -17,13 +17,13 @@ func NewMemoryRepository() *MemoryRepository {
 }
 
 // CreateMemory inserts a new memory into memory_tab
-func (repo *MemoryRepository) CreateMemory(ctx context.Context, db *sql.DB, req *mpb.CreateMemoryRequest) error {
+func (repo *MemoryRepository) CreateMemory(ctx context.Context, tx *sql.Tx, docID, userID uint64, memoryTitle, memoryContent string) error {
 	query := `
 		INSERT INTO memory_tab (doc_id, user_id, memory_title, memory_content, created_time, updated_time)
 		VALUES (?, ?, ?, ?, ?, ?)
 	`
 	createdTime := time.Now().Unix()
-	_, err := db.ExecContext(ctx, query, req.DocId, req.UserId, req.MemoryTitle, req.MemoryContent, createdTime, createdTime)
+	_, err := tx.ExecContext(ctx, query, docID, userID, memoryTitle, memoryContent, createdTime, createdTime)
 	if err != nil {
 		log.Printf("Error creating memory: %v\n", err)
 		return err
@@ -54,7 +54,7 @@ func (repo *MemoryRepository) GetMemoryById(ctx context.Context, db *sql.DB, mem
 // GetMemoriesByDocId retrieves memories for a specific document
 func (repo *MemoryRepository) GetMemoriesByDocId(ctx context.Context, db *sql.DB, docID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBMemory, error) {
 	offset := pageOffset(pageNumber, pageSize)
-	sanitisedOrderByString := repo.generateModuleOrderByString(orderByField, orderByDirection)
+	sanitisedOrderByString := repo.generateMemoryOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
 		SELECT memory_id, doc_id, user_id, memory_title, memory_content, created_time, updated_time
 		FROM memory_tab
@@ -84,9 +84,77 @@ func (repo *MemoryRepository) GetMemoriesByDocId(ctx context.Context, db *sql.DB
 	return memories, nil
 }
 
+// GetMemoriesByMemoryTitleSearch retrieves memories by memory_title search
+func (repo *MemoryRepository) GetMemoriesByMemoryTitleSearch(ctx context.Context, db *sql.DB, docID uint64, search string, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBMemory, error) {
+	offset := pageOffset(pageNumber, pageSize)
+	sanitisedOrderByString := repo.generateMemoryOrderByString(orderByField, orderByDirection)
+	query := fmt.Sprintf(`
+		SELECT memory_id, doc_id, user_id, memory_title, memory_content, created_time, updated_time
+		FROM memory_tab
+		WHERE doc_id = ? AND memory_title LIKE ?
+		ORDER BY %s
+		LIMIT ? OFFSET ?
+	`, sanitisedOrderByString)
 
-// generateModuleOrderByString generates the ORDER BY string for the module query
-func (repo *MemoryRepository) generateModuleOrderByString(orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) string {
+	rows, err := db.QueryContext(ctx, query, docID, "%"+search+"%", pageSize, offset)
+	if err != nil {
+		log.Printf("Error retrieving memories: %v\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var memories []*mpb.DBMemory
+	for rows.Next() {
+		var dbMemory mpb.DBMemory
+		if err := rows.Scan(&dbMemory.MemoryId, &dbMemory.DocId, &dbMemory.UserId, &dbMemory.MemoryTitle, &dbMemory.MemoryContent, &dbMemory.CreatedTime, &dbMemory.UpdatedTime); err != nil {
+			log.Printf("Error scanning memory row: %v\n", err)
+			return nil, err
+		}
+		memories = append(memories, &dbMemory)
+	}
+
+	log.Printf("Retrieved %d memories\n", len(memories))
+	return memories, nil
+}
+
+// UpdateMemory updates a memory by memory_id
+func (repo *MemoryRepository) UpdateMemory(ctx context.Context, db *sql.Tx, memoryID uint64, memoryTitle, memoryContent string) error {
+	query := `
+		UPDATE memory_tab
+		SET memory_title = ?, memory_content = ?, updated_time = ?
+		WHERE memory_id = ?
+	`
+	updatedTime := time.Now().Unix()
+
+	_, err := db.ExecContext(ctx, query, memoryTitle, memoryContent, updatedTime, memoryID)
+	if err != nil {
+		log.Printf("Error updating memory: %v\n", err)
+		return err
+	}
+	log.Println("Memory updated successfully")
+	return nil
+}
+
+// DeleteMemory deletes a memory by memory_id
+func (repo *MemoryRepository) DeleteMemory(ctx context.Context, tx *sql.Tx, memoryID uint64) error {
+	query := `
+		DELETE FROM memory_tab
+		WHERE memory_id = ?
+	`
+
+	_, err := tx.ExecContext(ctx, query, memoryID)
+
+	if err != nil {
+		log.Printf("Error deleting memory: %v\n", err)
+		return err
+	}
+	log.Println("Memory deleted successfully")
+	return nil
+}
+
+
+// generateMemoryOrderByString generates the ORDER BY string for the memory query
+func (repo *MemoryRepository) generateMemoryOrderByString(orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) string {
 	var orderByString string
 
 	switch orderByField {

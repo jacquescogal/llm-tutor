@@ -34,7 +34,8 @@ message CreateDocRequest {
   
   message GetDocByIdRequest {
     uint64 user_id = 1;
-    uint64 doc_id = 2;
+    uint64 module_id = 2;
+    uint64 doc_id = 3;
   }
   
   message GetDocByIdResponse {
@@ -56,11 +57,12 @@ message CreateDocRequest {
   
   message GetDocsByNameSearchRequest {
     uint64 user_id = 1;
-    string search_query = 2;
-    uint32 page_number = 3;
-    uint32 page_size = 4;
-    common.ORDER_BY_FIELD order_by_field = 5;
-    common.ORDER_BY_DIRECTION order_by_direction = 6;
+    uint64 module_id = 2;
+    string search_query = 3;
+    uint32 page_number = 4;
+    uint32 page_size = 5;
+    common.ORDER_BY_FIELD order_by_field = 6;
+    common.ORDER_BY_DIRECTION order_by_direction = 7;
   }
   
   message GetDocsByNameSearchResponse {
@@ -69,12 +71,13 @@ message CreateDocRequest {
   
   message UpdateDocRequest {
     uint64 user_id = 1;
-    uint64 doc_id = 2;
-    string doc_name = 3;
-    string doc_description = 4;
-    string doc_summary = 5;
-    common.UploadStatus upload_status = 6;
-    string s3_object_key = 7;
+    uint64 module_id = 2;
+    uint64 doc_id = 3;
+    string doc_name = 4;
+    string doc_description = 5;
+    string doc_summary = 6;
+    common.UploadStatus upload_status = 7;
+    string s3_object_key = 8;
   }
   
   message UpdateDocResponse {
@@ -82,7 +85,8 @@ message CreateDocRequest {
   
   message DeleteDocRequest {
     uint64 user_id = 1;
-    uint64 doc_id = 2;
+    uint64 module_id = 2;
+    uint64 doc_id = 3;
   }
   
   message DeleteDocResponse {

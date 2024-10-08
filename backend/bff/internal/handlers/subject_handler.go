@@ -19,7 +19,6 @@ func NewSubjectHandler(controller *controllers.SubjectController) *SubjectHandle
 }
 
 func (h *SubjectHandler) CreateSubject(c *gin.Context) {
-	// Call the controller to handle CreateSubject logic
 	err := h.controller.CreateSubject(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
@@ -28,8 +27,34 @@ func (h *SubjectHandler) CreateSubject(c *gin.Context) {
 	c.JSON(http.StatusOK, gin.H{"message": "Subject created successfully"})
 }
 
+func (h *SubjectHandler) GetPublicSubjects(c *gin.Context) {
+	res, err := h.controller.GetPublicSubjects(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *SubjectHandler) GetPrivateSubjectsByUserId(c *gin.Context) {
+	res, err := h.controller.GetPrivateSubjectsByUserID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
+func (h *SubjectHandler) GetFavouriteSubjectsByUserId(c *gin.Context) {
+	res, err := h.controller.GetFavouriteSubjectsByUserID(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, res)
+}
+
 func (h *SubjectHandler) GetSubjectById(c *gin.Context) {
-	// Call the controller to handle GetSubjectById logic
 	res, err := h.controller.GetSubjectByID(c)
 	if err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})

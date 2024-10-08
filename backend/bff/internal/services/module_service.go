@@ -21,6 +21,30 @@ func (s *ModuleService) CreateModule(ctx context.Context, req *module.CreateModu
 	return nil
 }
 
+func (s *ModuleService) GetPublicModules(ctx context.Context, req *module.GetPublicModulesRequest) (*module.GetPublicModulesResponse, error) {
+	resp, err := s.client.GetPublicModules(ctx, req)
+	if err != nil {
+		return nil, HandleGRPCError(err)
+	}
+	return resp, nil
+}
+
+func (s *ModuleService) GetPrivateModulesByUserId(ctx context.Context, req *module.GetPrivateModulesByUserIdRequest) (*module.GetPrivateModulesByUserIdResponse, error) {
+	resp, err := s.client.GetPrivateModulesByUserId(ctx, req)
+	if err != nil {
+		return nil, HandleGRPCError(err)
+	}
+	return resp, nil
+}
+
+func (s *ModuleService) GetFavouriteModulesByUserId(ctx context.Context, req *module.GetFavouriteModulesByUserIdRequest) (*module.GetFavouriteModulesByUserIdResponse, error) {
+	resp, err := s.client.GetFavouriteModulesByUserId(ctx, req)
+	if err != nil {
+		return nil, HandleGRPCError(err)
+	}
+	return resp, nil
+}
+
 func (s *ModuleService) GetModuleById(ctx context.Context, req *module.GetModuleByIdRequest) (*module.GetModuleByIdResponse, error) {
 	res, err := s.client.GetModuleById(ctx, req)
 	if err != nil {

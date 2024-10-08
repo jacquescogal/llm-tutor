@@ -11,6 +11,9 @@ option go_package = "bff/internal/proto/module";
 
 service ModuleService {
   rpc CreateModule (CreateModuleRequest) returns (CreateModuleResponse);
+  rpc GetPublicModules (GetPublicModulesRequest) returns (GetPublicModulesResponse); // public modules
+  rpc GetPrivateModulesByUserId (GetPrivateModulesByUserIdRequest) returns (GetPrivateModulesByUserIdResponse); // private modules
+  rpc GetFavouriteModulesByUserId (GetFavouriteModulesByUserIdRequest) returns (GetFavouriteModulesByUserIdResponse); // favourite modules that are either public or authorised
   rpc GetModuleById (GetModuleByIdRequest) returns (GetModuleByIdResponse);
   rpc GetModulesBySubjectId (GetModulesBySubjectIdRequest) returns (GetModulesBySubjectIdResponse);
   rpc GetModulesByNameSearch (GetModulesByNameSearchRequest) returns (GetModulesByNameSearchResponse);
@@ -28,6 +31,41 @@ message CreateModuleRequest {
   }
   
   message CreateModuleResponse {
+  }
+
+  message GetPublicModulesRequest {
+    uint32 page_number = 1;
+    uint32 page_size = 2;
+    common.ORDER_BY_FIELD order_by_field = 3;
+    common.ORDER_BY_DIRECTION order_by_direction = 4;
+  }
+
+  message GetPublicModulesResponse {
+    repeated DBModule modules = 1;
+  }
+
+  message GetPrivateModulesByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetPrivateModulesByUserIdResponse {
+    repeated DBModule modules = 1;
+  }
+
+  message GetFavouriteModulesByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetFavouriteModulesByUserIdResponse {
+    repeated DBModule modules = 1;
   }
   
   message GetModuleByIdRequest {

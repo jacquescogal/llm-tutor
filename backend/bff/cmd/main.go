@@ -2,8 +2,13 @@ package main
 
 import (
 	"bff/internal/controllers"
+	"bff/internal/db"
 	"bff/internal/handlers"
 	"bff/internal/proto/authenticator"
+	"bff/internal/proto/document"
+	"bff/internal/proto/memory"
+	"bff/internal/proto/module"
+	"bff/internal/proto/question"
 	"bff/internal/proto/subject"
 
 	// "bff/internal/proto/subject"
@@ -49,25 +54,25 @@ func main() {
 	}
 
     authService := services.NewAuthenticationService(authenticator.NewUserServiceClient(conn))
-	// memoryService := services.NewMemoryService(memory.NewMemoryServiceClient(memoryConn))
-	// documentService := services.NewDocumentService(document.NewDocServiceClient(memoryConn))
-	// moduleService := services.NewModuleService(module.NewModuleServiceClient(memoryConn))
-	// questionService := services.NewQuestionService(question.NewQuestionServiceClient(memoryConn))
+	memoryService := services.NewMemoryService(memory.NewMemoryServiceClient(memoryConn))
+	documentService := services.NewDocumentService(document.NewDocServiceClient(memoryConn))
+	moduleService := services.NewModuleService(module.NewModuleServiceClient(memoryConn))
+	questionService := services.NewQuestionService(question.NewQuestionServiceClient(memoryConn))
 	subjectService := services.NewSubjectService(subject.NewSubjectServiceClient(memoryConn))
-	// s3DB := db.NewS3UploadClient()
+	s3DB := db.NewS3UploadClient()
 
 	authController := controllers.NewAuthenticationController(authService)
-	// memoryController := controllers.NewMemoryController(memoryService)
-	// documentController := controllers.NewDocumentController(s3DB,documentService)
-	// moduleController := controllers.NewModuleController(moduleService)
-	// questionController := controllers.NewQuestionController(questionService)
+	memoryController := controllers.NewMemoryController(memoryService)
+	documentController := controllers.NewDocumentController(s3DB,documentService)
+	moduleController := controllers.NewModuleController(moduleService)
+	questionController := controllers.NewQuestionController(questionService)
 	subjectController := controllers.NewSubjectController(subjectService)
 
     authHandler := handlers.NewAuthenticationHandler(authController)
-	// memoryHandler := handlers.NewMemoryHandler(memoryController)
-	// documentHandler := handlers.NewDocumentHandler(documentController)
-	// moduleHandler := handlers.NewModuleHandler(moduleController)
-	// questionHandler := handlers.NewQuestionHandler(questionController)
+	memoryHandler := handlers.NewMemoryHandler(memoryController)
+	documentHandler := handlers.NewDocumentHandler(documentController)
+	moduleHandler := handlers.NewModuleHandler(moduleController)
+	questionHandler := handlers.NewQuestionHandler(questionController)
 	subjectHandler := handlers.NewSubjectHandler(subjectController)
 
 	// Auth Routes
@@ -77,11 +82,51 @@ func main() {
 
 	// Subject Routes
 	r.POST("/subject", handlers.SessionMiddleware(authService), subjectHandler.CreateSubject)
+	r.GET("/public/subject", handlers.SessionMiddleware(authService), subjectHandler.GetPublicSubjects)
+	r.GET("/private/subject", handlers.SessionMiddleware(authService), subjectHandler.GetPrivateSubjectsByUserId)
+	r.GET("/favourite/subject", handlers.SessionMiddleware(authService), subjectHandler.GetFavouriteSubjectsByUserId)
 	r.GET("/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.GetSubjectById)
 	r.GET("/user/subject", handlers.SessionMiddleware(authService), subjectHandler.GetSubjectsByUserID)
 	r.POST("/search/subject", handlers.SessionMiddleware(authService), subjectHandler.GetSubjectsByNameSearch)
 	r.PUT("/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.UpdateSubject)
 	r.DELETE("/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.DeleteSubject)
+
+	// Module Routes
+	r.POST("/module", handlers.SessionMiddleware(authService), moduleHandler.CreateModule)
+	r.GET("/public/module", handlers.SessionMiddleware(authService), moduleHandler.GetPublicModules)
+	r.GET("/private/module", handlers.SessionMiddleware(authService), moduleHandler.GetPrivateModulesByUserId)
+	r.GET("/favourite/module", handlers.SessionMiddleware(authService), moduleHandler.GetFavouriteModulesByUserId)
+	r.GET("/module/:module_id", handlers.SessionMiddleware(authService), moduleHandler.GetModuleById)
+	r.GET("/subject/:subject_id/module", handlers.SessionMiddleware(authService), moduleHandler.GetModulesBySubjectId)
+	r.POST("/search/module", handlers.SessionMiddleware(authService), moduleHandler.GetModulesByNameSearch)
+	// r.POST("/search/subject/:subject_id/module", handlers.SessionMiddleware(authService), moduleHandler.GetSubjectModulesByNameSearch)
+	r.PUT("/module/:module_id", handlers.SessionMiddleware(authService), moduleHandler.UpdateModule)
+	r.DELETE("/module/:module_id", handlers.SessionMiddleware(authService), moduleHandler.DeleteModule)
+
+	// Document Routes
+	r.POST("/module/:module_id/document", handlers.SessionMiddleware(authService), documentHandler.CreateDocument)
+	r.GET("/module/:module_id/document/:document_id", handlers.SessionMiddleware(authService), documentHandler.GetDocumentById)
+	r.GET("/module/:module_id/document", handlers.SessionMiddleware(authService), documentHandler.GetDocumentsByModuleId)
+	r.POST("/search/module/:module_id/document", handlers.SessionMiddleware(authService), documentHandler.GetDocumentsByNameSearch)
+	r.PUT("/module/:module_id/document/:document_id", handlers.SessionMiddleware(authService), documentHandler.UpdateDocument)
+	r.DELETE("/module/:module_id/document/:document_id", handlers.SessionMiddleware(authService), documentHandler.DeleteDocument)
+
+	// Memory Routes
+	r.POST("module/:module_id/document/:document_id/memory", handlers.SessionMiddleware(authService), memoryHandler.CreateMemory)
+	r.GET("module/:module_id/document/:document_id/memory/:memory_id", handlers.SessionMiddleware(authService), memoryHandler.GetMemoryById)
+	r.GET("module/:module_id/document/:document_id/memory", handlers.SessionMiddleware(authService), memoryHandler.GetMemoriesByDocId)
+	r.POST("search/module/:module_id/document/:document_id/memory", handlers.SessionMiddleware(authService), memoryHandler.GetMemoriesByMemoryTitleSearch)
+	r.PUT("module/:module_id/document/:document_id/memory/:memory_id", handlers.SessionMiddleware(authService), memoryHandler.UpdateMemory)
+	r.DELETE("module/:module_id/document/:document_id/memory/:memory_id", handlers.SessionMiddleware(authService), memoryHandler.DeleteMemory)
+
+
+	// Question Routes
+	r.POST("module/:module_id/document/:document_id/question", handlers.SessionMiddleware(authService), questionHandler.CreateQuestion)
+	r.GET("module/:module_id/document/:document_id/question/:question_id", handlers.SessionMiddleware(authService), questionHandler.GetQuestionById)
+	r.GET("module/:module_id/document/:document_id/question", handlers.SessionMiddleware(authService), questionHandler.GetQuestionsByDocId)
+	r.POST("search/module/:module_id/document/:document_id/question", handlers.SessionMiddleware(authService), questionHandler.GetQuestionsByQuestionTitleSearch)
+	r.PUT("module/:module_id/document/:document_id/question/:question_id", handlers.SessionMiddleware(authService), questionHandler.UpdateQuestion)
+	r.DELETE("module/:module_id/document/:document_id/question/:question_id", handlers.SessionMiddleware(authService), questionHandler.DeleteQuestion)
 
     // Run the server
 	servicePort := os.Getenv("BFF_SERVICE_PORT")

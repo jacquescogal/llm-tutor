@@ -6,6 +6,10 @@ import (
 	"memory_core/internal/controller"
 	"memory_core/internal/db"
 	"memory_core/internal/handler"
+	"memory_core/internal/proto/document"
+	"memory_core/internal/proto/memory"
+	"memory_core/internal/proto/module"
+	"memory_core/internal/proto/question"
 	"memory_core/internal/proto/subject"
 	"memory_core/internal/repository"
 	"net"
@@ -35,14 +39,32 @@ func main() {
 	// Initialize repositories and controllers
 	cacheStore := cache.NewCacheStore(redisClient.Client)
 	subjectRepo := repository.NewSubjectRepository()
+	moduleRepo := repository.NewModuleRepository()
 	userSubjectMapRepo := repository.NewUserSubjectMapRepository(cacheStore)
-	subjectController := controller.NewSubjectController(mysqlDB.Conn, subjectRepo, userSubjectMapRepo)
+	userModuleMapRepo := repository.NewUserModuleMapRepository(cacheStore)
+	docRepo := repository.NewDocRepository()
 
-	// Initialize gRPC server and register services
+	subjectController := controller.NewSubjectController(mysqlDB.Conn, subjectRepo, userSubjectMapRepo)
+	moduleController := controller.NewModuleController(mysqlDB.Conn, moduleRepo, userModuleMapRepo)
+	docController := controller.NewDocController(mysqlDB.Conn, docRepo, moduleRepo, userModuleMapRepo)
+	questionController := controller.NewQuestionController(mysqlDB.Conn, repository.NewQuestionRepository(), docRepo, moduleRepo, userModuleMapRepo)
+	memoryController := controller.NewMemoryController(mysqlDB.Conn, repository.NewMemoryRepository(), userModuleMapRepo, moduleRepo, docRepo)
+
+
+	// Initialize gRPC server and handlers
 	grpcServer := grpc.NewServer()
 	subjectHandler := handler.NewSubjectHandler(subjectController)
+	moduleHandler := handler.NewModuleHandler(moduleController)
+	docHandler := handler.NewDocHandler(docController)
+	questionHandler := handler.NewQuestionHandler(questionController)
+	memoryHandler := handler.NewMemoryHandler(memoryController)
 
+	// Register services
 	subject.RegisterSubjectServiceServer(grpcServer, subjectHandler)
+	module.RegisterModuleServiceServer(grpcServer, moduleHandler)
+	document.RegisterDocServiceServer(grpcServer, docHandler)
+	question.RegisterQuestionServiceServer(grpcServer, questionHandler)
+	memory.RegisterMemoryServiceServer(grpcServer, memoryHandler)
 
 	// Start gRPC server and listen on port 50051
 	lis, err := net.Listen("tcp", ":50052")

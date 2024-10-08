@@ -35,6 +35,7 @@ CREATE TABLE IF NOT EXISTS module_tab (
     module_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,                            -- Primary key with auto increment for module_id         
     module_name VARCHAR(255) NOT NULL,                                               -- Module name field with max length 255 and NOT NULL constraint            
     module_description TEXT NOT NULL,                                                -- Module description field with TEXT data type and NOT NULL constraint
+    is_public BOOLEAN NOT NULL,                                                      -- Boolean field to indicate if the module is public or not
     created_time BIGINT UNSIGNED NOT NULL,                                          -- Created time field with BIGINT UNSIGNED data type and NOT NULL constraint            
     updated_time BIGINT UNSIGNED NOT NULL                                      -- Last updated time field with BIGINT UNSIGNED data type and NOT NULL constraint                          
 ); -- module_tab table stores the module information.
@@ -68,7 +69,8 @@ CREATE TABLE IF NOT EXISTS user_module_map_tab (
 CREATE TABLE IF NOT EXISTS doc_tab (
     doc_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,                                                      -- Primary key with auto increment for doc_id
     module_id BIGINT UNSIGNED NOT NULL,                                                                      -- Foreign key to module_tab               
-    doc_title VARCHAR(255) NOT NULL,                                                                             -- Doc title field with max length 255 and NOT NULL constraint
+    doc_name VARCHAR(255) NOT NULL,                                                                             -- Doc title field with max length 255 and NOT NULL constraint
+    doc_description TEXT NOT NULL,                                                                              -- Doc description field with TEXT data type and NOT NULL constraint
     doc_summary TEXT NOT NULL,                                                                              -- Doc summary field with TEXT data type and NOT NULL constraint           
     upload_status INT UNSIGNED NOT NULL,                                                                    -- Enum field for upload status defined in proto file
     s3_object_key VARCHAR(255) NOT NULL,                                                                       -- Object key field with max length 255 and NOT NULL constraint
@@ -77,8 +79,8 @@ CREATE TABLE IF NOT EXISTS doc_tab (
     FOREIGN KEY (module_id) REFERENCES module_tab(module_id) ON DELETE CASCADE                                 -- Foreign key constraint
 ); -- doc_tab table stores the document information.
 
--- full text search index on doc_title
-CREATE FULLTEXT INDEX idx_doc_title ON doc_tab(doc_title);
+-- full text search index on doc_name
+CREATE FULLTEXT INDEX idx_doc_name ON doc_tab(doc_name);
 -- index on created_time to sort documents by created_time
 CREATE INDEX idx_created_time ON doc_tab(created_time);
 
@@ -88,7 +90,7 @@ CREATE TABLE IF NOT EXISTS memory_tab (
     memory_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,                            -- Primary key with auto increment for memory_id   
     doc_id BIGINT UNSIGNED NOT NULL,                                                 -- Foreign key to doc_tab          
     user_id BIGINT UNSIGNED NOT NULL,                                                -- Foreign key to user_tab
-    memory_title VARCHAR(255) NOT NULL,                                             -- Memory title field with max length 255 and NOT NULL constraint
+    memory_title TEXT NOT NULL,                                             -- Memory title field
     memory_content TEXT NOT NULL,                                                    -- Memory content field with TEXT data type and NOT NULL constraint
     created_time BIGINT UNSIGNED NOT NULL,                                           -- Created time field with BIGINT UNSIGNED data type and NOT NULL constraint
     updated_time BIGINT UNSIGNED NOT NULL,                                      -- Last updated time field with BIGINT UNSIGNED data type and NOT NULL constraint
@@ -105,7 +107,7 @@ CREATE TABLE IF NOT EXISTS question_tab (
     question_id BIGINT UNSIGNED AUTO_INCREMENT PRIMARY KEY,                         -- Primary key with auto increment for question_id
     doc_id BIGINT UNSIGNED NOT NULL,                                                -- Foreign key to doc_tab
     user_id BIGINT UNSIGNED NOT NULL,                                                -- Foreign key to user_tab
-    question_title VARCHAR(255) NOT NULL,                                           -- Question title field with max length 255 and NOT NULL constraint
+    question_title TEXT NOT NULL,                                           -- Question title field
     question_blob BLOB NOT NULL,                                                    -- Question blob field to be unmarshalled into a question proto message
     question_type INT UNSIGNED NOT NULL,                                            -- Enum field for question type defined in question proto file and indicates how to unmarshal the question blob
     created_time BIGINT UNSIGNED NOT NULL,                                          -- Created time field with BIGINT UNSIGNED data type and NOT NULL constraint

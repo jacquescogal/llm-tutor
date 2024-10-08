@@ -21,12 +21,15 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	ModuleService_CreateModule_FullMethodName           = "/module.ModuleService/CreateModule"
-	ModuleService_GetModuleById_FullMethodName          = "/module.ModuleService/GetModuleById"
-	ModuleService_GetModulesBySubjectId_FullMethodName  = "/module.ModuleService/GetModulesBySubjectId"
-	ModuleService_GetModulesByNameSearch_FullMethodName = "/module.ModuleService/GetModulesByNameSearch"
-	ModuleService_UpdateModule_FullMethodName           = "/module.ModuleService/UpdateModule"
-	ModuleService_DeleteModule_FullMethodName           = "/module.ModuleService/DeleteModule"
+	ModuleService_CreateModule_FullMethodName                = "/module.ModuleService/CreateModule"
+	ModuleService_GetPublicModules_FullMethodName            = "/module.ModuleService/GetPublicModules"
+	ModuleService_GetPrivateModulesByUserId_FullMethodName   = "/module.ModuleService/GetPrivateModulesByUserId"
+	ModuleService_GetFavouriteModulesByUserId_FullMethodName = "/module.ModuleService/GetFavouriteModulesByUserId"
+	ModuleService_GetModuleById_FullMethodName               = "/module.ModuleService/GetModuleById"
+	ModuleService_GetModulesBySubjectId_FullMethodName       = "/module.ModuleService/GetModulesBySubjectId"
+	ModuleService_GetModulesByNameSearch_FullMethodName      = "/module.ModuleService/GetModulesByNameSearch"
+	ModuleService_UpdateModule_FullMethodName                = "/module.ModuleService/UpdateModule"
+	ModuleService_DeleteModule_FullMethodName                = "/module.ModuleService/DeleteModule"
 )
 
 // ModuleServiceClient is the client API for ModuleService service.
@@ -34,6 +37,9 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type ModuleServiceClient interface {
 	CreateModule(ctx context.Context, in *CreateModuleRequest, opts ...grpc.CallOption) (*CreateModuleResponse, error)
+	GetPublicModules(ctx context.Context, in *GetPublicModulesRequest, opts ...grpc.CallOption) (*GetPublicModulesResponse, error)
+	GetPrivateModulesByUserId(ctx context.Context, in *GetPrivateModulesByUserIdRequest, opts ...grpc.CallOption) (*GetPrivateModulesByUserIdResponse, error)
+	GetFavouriteModulesByUserId(ctx context.Context, in *GetFavouriteModulesByUserIdRequest, opts ...grpc.CallOption) (*GetFavouriteModulesByUserIdResponse, error)
 	GetModuleById(ctx context.Context, in *GetModuleByIdRequest, opts ...grpc.CallOption) (*GetModuleByIdResponse, error)
 	GetModulesBySubjectId(ctx context.Context, in *GetModulesBySubjectIdRequest, opts ...grpc.CallOption) (*GetModulesBySubjectIdResponse, error)
 	GetModulesByNameSearch(ctx context.Context, in *GetModulesByNameSearchRequest, opts ...grpc.CallOption) (*GetModulesByNameSearchResponse, error)
@@ -53,6 +59,36 @@ func (c *moduleServiceClient) CreateModule(ctx context.Context, in *CreateModule
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateModuleResponse)
 	err := c.cc.Invoke(ctx, ModuleService_CreateModule_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *moduleServiceClient) GetPublicModules(ctx context.Context, in *GetPublicModulesRequest, opts ...grpc.CallOption) (*GetPublicModulesResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPublicModulesResponse)
+	err := c.cc.Invoke(ctx, ModuleService_GetPublicModules_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *moduleServiceClient) GetPrivateModulesByUserId(ctx context.Context, in *GetPrivateModulesByUserIdRequest, opts ...grpc.CallOption) (*GetPrivateModulesByUserIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPrivateModulesByUserIdResponse)
+	err := c.cc.Invoke(ctx, ModuleService_GetPrivateModulesByUserId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *moduleServiceClient) GetFavouriteModulesByUserId(ctx context.Context, in *GetFavouriteModulesByUserIdRequest, opts ...grpc.CallOption) (*GetFavouriteModulesByUserIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFavouriteModulesByUserIdResponse)
+	err := c.cc.Invoke(ctx, ModuleService_GetFavouriteModulesByUserId_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -114,6 +150,9 @@ func (c *moduleServiceClient) DeleteModule(ctx context.Context, in *DeleteModule
 // for forward compatibility.
 type ModuleServiceServer interface {
 	CreateModule(context.Context, *CreateModuleRequest) (*CreateModuleResponse, error)
+	GetPublicModules(context.Context, *GetPublicModulesRequest) (*GetPublicModulesResponse, error)
+	GetPrivateModulesByUserId(context.Context, *GetPrivateModulesByUserIdRequest) (*GetPrivateModulesByUserIdResponse, error)
+	GetFavouriteModulesByUserId(context.Context, *GetFavouriteModulesByUserIdRequest) (*GetFavouriteModulesByUserIdResponse, error)
 	GetModuleById(context.Context, *GetModuleByIdRequest) (*GetModuleByIdResponse, error)
 	GetModulesBySubjectId(context.Context, *GetModulesBySubjectIdRequest) (*GetModulesBySubjectIdResponse, error)
 	GetModulesByNameSearch(context.Context, *GetModulesByNameSearchRequest) (*GetModulesByNameSearchResponse, error)
@@ -131,6 +170,15 @@ type UnimplementedModuleServiceServer struct{}
 
 func (UnimplementedModuleServiceServer) CreateModule(context.Context, *CreateModuleRequest) (*CreateModuleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateModule not implemented")
+}
+func (UnimplementedModuleServiceServer) GetPublicModules(context.Context, *GetPublicModulesRequest) (*GetPublicModulesResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublicModules not implemented")
+}
+func (UnimplementedModuleServiceServer) GetPrivateModulesByUserId(context.Context, *GetPrivateModulesByUserIdRequest) (*GetPrivateModulesByUserIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPrivateModulesByUserId not implemented")
+}
+func (UnimplementedModuleServiceServer) GetFavouriteModulesByUserId(context.Context, *GetFavouriteModulesByUserIdRequest) (*GetFavouriteModulesByUserIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFavouriteModulesByUserId not implemented")
 }
 func (UnimplementedModuleServiceServer) GetModuleById(context.Context, *GetModuleByIdRequest) (*GetModuleByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetModuleById not implemented")
@@ -182,6 +230,60 @@ func _ModuleService_CreateModule_Handler(srv interface{}, ctx context.Context, d
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(ModuleServiceServer).CreateModule(ctx, req.(*CreateModuleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModuleService_GetPublicModules_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublicModulesRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModuleServiceServer).GetPublicModules(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ModuleService_GetPublicModules_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModuleServiceServer).GetPublicModules(ctx, req.(*GetPublicModulesRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModuleService_GetPrivateModulesByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPrivateModulesByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModuleServiceServer).GetPrivateModulesByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ModuleService_GetPrivateModulesByUserId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModuleServiceServer).GetPrivateModulesByUserId(ctx, req.(*GetPrivateModulesByUserIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _ModuleService_GetFavouriteModulesByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFavouriteModulesByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(ModuleServiceServer).GetFavouriteModulesByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: ModuleService_GetFavouriteModulesByUserId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(ModuleServiceServer).GetFavouriteModulesByUserId(ctx, req.(*GetFavouriteModulesByUserIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -286,6 +388,18 @@ var ModuleService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateModule",
 			Handler:    _ModuleService_CreateModule_Handler,
+		},
+		{
+			MethodName: "GetPublicModules",
+			Handler:    _ModuleService_GetPublicModules_Handler,
+		},
+		{
+			MethodName: "GetPrivateModulesByUserId",
+			Handler:    _ModuleService_GetPrivateModulesByUserId_Handler,
+		},
+		{
+			MethodName: "GetFavouriteModulesByUserId",
+			Handler:    _ModuleService_GetFavouriteModulesByUserId_Handler,
 		},
 		{
 			MethodName: "GetModuleById",

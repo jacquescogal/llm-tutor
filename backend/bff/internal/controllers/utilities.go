@@ -2,11 +2,45 @@ package controllers
 
 import (
 	"bff/internal/proto/authenticator"
+	"bff/internal/proto/common"
 	"fmt"
 	"strconv"
 
 	"github.com/gin-gonic/gin"
 )
+
+const (
+	QUERY_ORDER_BY_FIELD = "sort_by" // created_at, updated_at, title, etc
+	QUERY_ORDER_BY_DIRECTION = "order" // asc or desc
+	QUERY_PAGE_NUMBER = "page_number"
+	QUERY_PAGE_SIZE = "page_size"
+)
+
+type QueryItems struct{
+	PageNumber uint32
+	OrderByField common.ORDER_BY_FIELD
+	OrderByDirection common.ORDER_BY_DIRECTION
+}
+
+func NewQueryItems(ctx *gin.Context) (*QueryItems, error) {
+	pageNumber, err := getUint32FromString(ctx.DefaultQuery(QUERY_PAGE_NUMBER, "1"))
+	if err != nil {
+		return nil, err
+	}
+	orderByField, err := getInt32FromString(ctx.DefaultQuery(QUERY_ORDER_BY_FIELD, "1"))
+	if err != nil {
+		return nil, err
+	}
+	orderByDirection, err := getInt32FromString(ctx.DefaultQuery(QUERY_ORDER_BY_DIRECTION, "1"))
+	if err != nil {
+		return nil, err
+	}
+	return &QueryItems{
+		PageNumber: pageNumber,
+		OrderByField: common.ORDER_BY_FIELD(orderByField),
+		OrderByDirection: common.ORDER_BY_DIRECTION(orderByDirection),
+	}, nil
+}
 
 func getUserSession(ctx *gin.Context) (*authenticator.UserSession, error) {
 	userSession, ok := ctx.Get("user_session")

@@ -9,18 +9,19 @@ export interface createSessionResponse {
   message: string;
 }
 
-
-export const createSession = async (payload: createSessionPayload):Promise<createSessionResponse> => {
+export const createSession = async (
+  payload: createSessionPayload
+): Promise<createSessionResponse> => {
   const { username, password } = payload;
 
   const basicAuth = btoa(`${username}:${password}`);
 
-    const response = await apiClient.post('/session', null, {
-      headers: {
-        'Authorization': `Basic ${basicAuth}`,
-      },
-    });
-    return response.data;
+  const response = await apiClient.post("/session", null, {
+    headers: {
+      Authorization: `Basic ${basicAuth}`,
+    },
+  });
+  return response.data;
 };
 
 export interface createUserPayload {
@@ -31,16 +32,17 @@ export interface createUserResponse {
   message: string;
 }
 
-
-export const createUser = async (payload: createUserPayload):Promise<createUserResponse> => {
+export const createUser = async (
+  payload: createUserPayload
+): Promise<createUserResponse> => {
   const { username, password } = payload;
 
   const basicAuth = btoa(`${username}:${password}`);
 
-    const response = await apiClient.post('/user', null, {
-      headers: {
-        'Authorization': `Basic ${basicAuth}`,
-      },
-    });
-    return response.data;
+  const response = await apiClient.post("/user", null, {
+    headers: {
+      Authorization: `Basic ${basicAuth}`,
+    },
+  });
+  return response.data;
 };

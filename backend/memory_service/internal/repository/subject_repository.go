@@ -39,6 +39,110 @@ func (repo *SubjectRepository) CreateSubject(ctx context.Context, tx *sql.Tx, su
 	return uint64(subjectID), nil
 }
 
+// GetPublicSubjects retrieves all public subjects
+func (repo *SubjectRepository) GetPublicSubjects(ctx context.Context, db *sql.DB, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+	offset := pageOffset(pageNumber, pageSize)
+	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
+	query := fmt.Sprintf(`
+		SELECT subject_id, subject_name, subject_description, is_public, created_time, updated_time
+		FROM subject_tab
+		WHERE is_public = 1
+		ORDER BY %s
+		LIMIT ? OFFSET ?
+		`, sanitisedOrderByString)
+
+	rows, err := db.QueryContext(ctx, query, pageSize, offset)
+	if err != nil {
+		log.Printf("Error retrieving subjects: %v\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subjects []*mpb.DBSubject
+	for rows.Next() {
+		var dbSubject mpb.DBSubject
+		if err := rows.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime); err != nil {
+			log.Printf("Error scanning subject row: %v\n", err)
+			return nil, err
+		}
+		subjects = append(subjects, &dbSubject)
+	}
+
+	log.Printf("Retrieved %d subjects\n", len(subjects))
+	return subjects, nil
+}
+
+// GetPrivateSubjectsByUserId retrieves all private subjects for a user
+func (repo *SubjectRepository) GetPrivateSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+	offset := pageOffset(pageNumber, pageSize)
+	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
+
+	query := fmt.Sprintf(`
+		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time
+		FROM subject_tab s
+		JOIN user_subject_map_tab ma ON s.subject_id = ma.subject_id
+		WHERE ma.user_id = ? AND ma.user_subject_role != 0
+		ORDER BY s.%s
+		LIMIT ? OFFSET ?
+		`, sanitisedOrderByString)
+
+	rows, err := db.QueryContext(ctx, query, userID, pageSize, offset)
+	if err != nil {
+		log.Printf("Error retrieving subjects: %v\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subjects []*mpb.DBSubject
+	for rows.Next() {
+		var dbSubject mpb.DBSubject
+		if err := rows.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime); err != nil {
+			log.Printf("Error scanning subject row: %v\n", err)
+			return nil, err
+		}
+		subjects = append(subjects, &dbSubject)
+	}
+
+	log.Printf("Retrieved %d subjects\n", len(subjects))
+	return subjects, nil
+}
+
+// GetFavouriteSubjectsByUserId retrieves all favorite subjects for a user
+func (repo *SubjectRepository) GetFavouriteSubjectsByUserId(ctx context.Context, db *sql.DB, userID uint64, pageNumber, pageSize uint32, orderByField common.ORDER_BY_FIELD, orderByDirection common.ORDER_BY_DIRECTION) ([]*mpb.DBSubject, error) {
+	offset := pageOffset(pageNumber, pageSize)
+	sanitisedOrderByString := repo.generateSubjectOrderByString(orderByField, orderByDirection)
+	query := fmt.Sprintf(`
+		SELECT s.subject_id, s.subject_name, s.subject_description, s.is_public, s.created_time, s.updated_time
+		FROM subject_tab s
+		JOIN user_subject_map_tab ma ON s.subject_id = ma.subject_id
+		WHERE ma.user_id = ? AND ma.is_favourite = 1
+		ORDER BY s.%s
+		LIMIT ? OFFSET ?
+		`, sanitisedOrderByString)
+
+	rows, err := db.QueryContext(ctx, query, userID, pageSize, offset)
+	if err != nil {
+		log.Printf("Error retrieving subjects: %v\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subjects []*mpb.DBSubject
+	for rows.Next() {
+		var dbSubject mpb.DBSubject
+		if err := rows.Scan(&dbSubject.SubjectId, &dbSubject.SubjectName, &dbSubject.SubjectDescription, &dbSubject.IsPublic, &dbSubject.CreatedTime, &dbSubject.UpdatedTime); err != nil {
+			log.Printf("Error scanning subject row: %v\n", err)
+			return nil, err
+		}
+		subjects = append(subjects, &dbSubject)
+	}
+
+	log.Printf("Retrieved %d subjects\n", len(subjects))
+	return subjects, nil
+}
+
+
+
 // GetSubjectById retrieves a subject by subject_id
 func (repo *SubjectRepository) GetSubjectById(ctx context.Context, db *sql.DB, userID, subjectID uint64) (*mpb.DBSubject, error) {
 	// get subject by subject_id

@@ -79,6 +79,46 @@ func (c *SubjectController) CreateSubject(ctx context.Context, req *mpb.CreateSu
 	return &mpb.CreateSubjectResponse{}, nil
 }
 
+// GetPublicSubjects handles the business logic for retrieving public subjects
+func (c *SubjectController) GetPublicSubjects(ctx context.Context, req *mpb.GetPublicSubjectsRequest) (*mpb.GetPublicSubjectsResponse, error) {
+	subjects, err := c.subjectRepo.GetPublicSubjects(ctx, c.db, req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
+	if err != nil {
+		log.Printf("Failed to get public subjects: %v", err)
+		return nil, err
+	}
+	return &mpb.GetPublicSubjectsResponse{Subjects: subjects}, nil
+}
+
+// GetPrivateSubjectsByUserId handles the business logic for retrieving private subjects by user ID
+func (c *SubjectController) GetPrivateSubjectsByUserId(ctx context.Context, req *mpb.GetPrivateSubjectsByUserIdRequest) (*mpb.GetPrivateSubjectsByUserIdResponse, error) {
+	if req.GetUserId() == 0 {
+		log.Println("User ID is required")
+		return nil, status.Error(codes.InvalidArgument, "User ID is required")
+	}
+
+	subjects, err := c.subjectRepo.GetPrivateSubjectsByUserId(ctx, c.db, req.GetUserId(), req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
+	if err != nil {
+		log.Printf("Failed to get private subjects by user ID: %v", err)
+		return nil, err
+	}
+	return &mpb.GetPrivateSubjectsByUserIdResponse{Subjects: subjects}, nil
+}
+
+// GetFavoriteSubjectsByUserId handles the business logic for retrieving favorite subjects by user ID
+func (c *SubjectController) GetFavouriteSubjectsByUserId(ctx context.Context, req *mpb.GetFavouriteSubjectsByUserIdRequest) (*mpb.GetFavouriteSubjectsByUserIdResponse, error) {
+	if req.GetUserId() == 0 {
+		log.Println("User ID is required")
+		return nil, status.Error(codes.InvalidArgument, "User ID is required")
+	}
+
+	subjects, err := c.subjectRepo.GetFavouriteSubjectsByUserId(ctx, c.db, req.GetUserId(), req.GetPageNumber(), req.GetPageSize(), req.GetOrderByField(), req.GetOrderByDirection())
+	if err != nil {
+		log.Printf("Failed to get favorite subjects by user ID: %v", err)
+		return nil, err
+	}
+	return &mpb.GetFavouriteSubjectsByUserIdResponse{Subjects: subjects}, nil
+}
+
 // GetSubjectById handles the business logic for retrieving a subject by ID
 func (c *SubjectController) GetSubjectById(ctx context.Context, req *mpb.GetSubjectByIdRequest) (*mpb.GetSubjectByIdResponse, error) {
 	// validate input

@@ -8,6 +8,12 @@ option go_package = "%replace%/internal/proto/subject";
 
 service SubjectService {
     rpc CreateSubject (CreateSubjectRequest) returns (CreateSubjectResponse);
+
+
+    rpc GetPublicSubjects (GetPublicSubjectsRequest) returns (GetPublicSubjectsResponse); // public Subjects
+    rpc GetPrivateSubjectsByUserId (GetPrivateSubjectsByUserIdRequest) returns (GetPrivateSubjectsByUserIdResponse); // private Subjects
+    rpc GetFavouriteSubjectsByUserId (GetFavouriteSubjectsByUserIdRequest) returns (GetFavouriteSubjectsByUserIdResponse); // favourite Subjects that are either public or authorised
+
     rpc GetSubjectById (GetSubjectByIdRequest) returns (GetSubjectByIdResponse);
     rpc GetSubjectsByUserId (GetSubjectsByUserIdRequest) returns (GetSubjectsByUserIdResponse);
     rpc GetSubjectsByNameSearch (GetSubjectsByNameSearchRequest) returns (GetSubjectsByNameSearchResponse);
@@ -27,6 +33,43 @@ message CreateSubjectRequest {
   
   message CreateSubjectResponse {
   }
+
+  message GetPublicSubjectsRequest {
+    uint32 page_number = 1;
+    uint32 page_size = 2;
+    common.ORDER_BY_FIELD order_by_field = 3;
+    common.ORDER_BY_DIRECTION order_by_direction = 4;
+  }
+
+  message GetPublicSubjectsResponse {
+    repeated DBSubject subjects = 1;
+  }
+
+  message GetPrivateSubjectsByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetPrivateSubjectsByUserIdResponse {
+    repeated DBSubject subjects = 1;
+  }
+
+  message GetFavouriteSubjectsByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetFavouriteSubjectsByUserIdResponse {
+    repeated DBSubject subjects = 1;
+  }
+
+
   
   message GetSubjectByIdRequest {
     uint64 user_id = 1;
