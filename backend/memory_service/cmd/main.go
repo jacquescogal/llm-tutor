@@ -2,15 +2,16 @@ package main
 
 import (
 	"log"
+	"memory_core/internal/cache"
+	"memory_core/internal/controller"
+	"memory_core/internal/db"
+	"memory_core/internal/handler"
+	"memory_core/internal/proto/subject"
+	"memory_core/internal/repository"
 	"net"
-	"google.golang.org/grpc"
-	"authentication_service/internal/db"
-	"authentication_service/internal/cache"
-	"authentication_service/internal/controller"
-	"authentication_service/internal/repository"
-	"authentication_service/internal/handler"
-	pb "authentication_service/internal/proto/authenticator"
+
 	"github.com/joho/godotenv"
+	"google.golang.org/grpc"
 )
 
 func main() {
@@ -32,23 +33,23 @@ func main() {
 	defer mysqlDB.Close()
 
 	// Initialize repositories and controllers
-	userRepo := repository.NewUserRepo(mysqlDB.Conn)
-	distributedLock := cache.NewDistributedLock(redisClient.Client)
-	sessionStore := cache.NewSessionStore(redisClient.Client)
-	authController := controller.NewAuthenticationController(userRepo, distributedLock, sessionStore)
+	cacheStore := cache.NewCacheStore(redisClient.Client)
+	subjectRepo := repository.NewSubjectRepository()
+	userSubjectMapRepo := repository.NewUserSubjectMapRepository(cacheStore)
+	subjectController := controller.NewSubjectController(mysqlDB.Conn, subjectRepo, userSubjectMapRepo)
 
 	// Initialize gRPC server and register services
 	grpcServer := grpc.NewServer()
-	userHandler := handler.NewAuthenticationHandler(authController)
+	subjectHandler := handler.NewSubjectHandler(subjectController)
 
-	pb.RegisterUserServiceServer(grpcServer, userHandler)
+	subject.RegisterSubjectServiceServer(grpcServer, subjectHandler)
 
 	// Start gRPC server and listen on port 50051
-	lis, err := net.Listen("tcp", ":50051")
+	lis, err := net.Listen("tcp", ":50052")
 	if err != nil {
-		log.Fatalf("Failed to listen on port 50051: %v", err)
+		log.Fatalf("Failed to listen on port 50052: %v", err)
 	}
-	log.Println("gRPC server running on port 50051")
+	log.Println("gRPC server running on port 50052")
 
 	if err := grpcServer.Serve(lis); err != nil {
 		log.Fatalf("Failed to serve gRPC: %v", err)

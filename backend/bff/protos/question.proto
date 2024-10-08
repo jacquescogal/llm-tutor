@@ -86,12 +86,13 @@ message CreateQuestionRequest {
 
 message DBQuestion {
     uint64 question_id = 1;
-    uint64 doc_id = 2;
-    string question_title = 3;
-    bytes question_blob = 4;
-    common.QuestionType question_type = 5;
-    uint64 created_time = 6;
-    uint64 updated_time = 7;
+    uint64 user_id = 2;
+    uint64 doc_id = 3;
+    string question_title = 4;
+    bytes question_blob = 5;
+    common.QuestionType question_type = 6;
+    uint64 created_time = 7;
+    uint64 updated_time = 8;
   }
   
   // Question Types

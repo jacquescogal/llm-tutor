@@ -4,7 +4,8 @@ import (
 	"context"
 	"database/sql"
 	"log"
-	mpb "memory_core/internal/proto/memory"
+	"memory_core/internal/proto/common"
+	mpb "memory_core/internal/proto/subject"
 	"memory_core/internal/repository"
 	"strings"
 
@@ -15,11 +16,11 @@ import (
 type SubjectController struct {
 	db *sql.DB
 	subjectRepo *repository.SubjectRepository
-	memberAccessRepo *repository.MemberAccessRepository
+	userSubjectMapRepo *repository.UserSubjectMapRepository
 }
 
-func NewSubjectController(db *sql.DB, subjectRepo *repository.SubjectRepository, memberAccessRepo *repository.MemberAccessRepository) *SubjectController {
-	return &SubjectController{db: db, subjectRepo: subjectRepo, memberAccessRepo: memberAccessRepo}
+func NewSubjectController(db *sql.DB, subjectRepo *repository.SubjectRepository, userSubjectMapRepo *repository.UserSubjectMapRepository) *SubjectController {
+	return &SubjectController{db: db, subjectRepo: subjectRepo, userSubjectMapRepo: userSubjectMapRepo}
 }
 
 // CreateSubject handles the business logic for creating a new subject
@@ -62,8 +63,7 @@ func (c *SubjectController) CreateSubject(ctx context.Context, req *mpb.CreateSu
 	}
 
 	// create the member access mapping
-	// the user who creates the subject is the 
-	err = c.memberAccessRepo.CreateMemberAccess(ctx, tx, req.GetUserId(), subjectID, mpb.MemberRole_MEMBER_ROLE_ADMIN)
+	err = c.userSubjectMapRepo.PutUserSubjectMapping(ctx, tx, req.GetUserId(), subjectID, common.UserSubjectRole_USER_SUBJECT_ROLE_OWNER, false)
 	if err != nil {
 		log.Printf("Failed to create member access: %v", err)
 		tx.Rollback()
@@ -147,11 +147,11 @@ func (c *SubjectController) UpdateSubject(ctx context.Context, req *mpb.UpdateSu
 	}
 
 	// check if user is an admin, owner or editor of the subject
-	memberAccess, err := c.memberAccessRepo.GetMemberAccess(ctx, c.db, req.GetUserId(), req.GetSubjectId())
+	memberAccess, err := c.userSubjectMapRepo.GetUserSubjectMapping(ctx, c.db, req.GetUserId(), req.GetSubjectId())
 	if err != nil {
 		log.Printf("Failed to get member access: %v", err)
 		return nil, err
-	} else if err := validateMemberEditPrivileges(memberAccess.GetMemberRole()); err != nil {
+	} else if err := validateMemberEditPrivileges(memberAccess.GetUserSubjectRole()); err != nil {
 		log.Printf("User does not have permission to edit subject: %v", err)
 		return nil, err
 	}
@@ -199,11 +199,11 @@ func (c *SubjectController) DeleteSubject(ctx context.Context, req *mpb.DeleteSu
 	}
 
 	// check if user is an admin or owner of the subject
-	memberAccess, err := c.memberAccessRepo.GetMemberAccess(ctx, c.db, req.GetUserId(), req.GetSubjectId())
+	memberAccess, err := c.userSubjectMapRepo.GetUserSubjectMapping(ctx, c.db, req.GetUserId(), req.GetSubjectId())
 	if err != nil {
 		log.Printf("Failed to get member access: %v", err)
 		return nil, err
-	} else if err := validateMemberEditPrivileges(memberAccess.GetMemberRole()); err != nil {
+	} else if err := validateMemberEditPrivileges(memberAccess.GetUserSubjectRole()); err != nil {
 		log.Printf("User does not have permission to edit subject: %v", err)
 		return nil, err
 	}
@@ -251,8 +251,8 @@ func parseAndValidateSubjectName(subjectName string) (string, error) {
 	}
 }
 
-func validateMemberEditPrivileges(memberRole mpb.MemberRole) error {
-	if memberRole != mpb.MemberRole_MEMBER_ROLE_ADMIN && memberRole != mpb.MemberRole_MEMBER_ROLE_OWNER && memberRole != mpb.MemberRole_MEMBER_ROLE_EDITOR {
+func validateMemberEditPrivileges(memberRole common.UserSubjectRole) error {
+	if memberRole != common.UserSubjectRole_USER_SUBJECT_ROLE_ADMIN && memberRole != common.UserSubjectRole_USER_SUBJECT_ROLE_OWNER && memberRole != common.UserSubjectRole_USER_SUBJECT_ROLE_EDITOR {
 		return status.Error(codes.PermissionDenied, "User does not have permission to edit subject")
 	}
 	return nil

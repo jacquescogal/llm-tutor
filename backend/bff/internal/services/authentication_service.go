@@ -41,11 +41,11 @@ func (s *AuthenticationService) DeleteSession(sessionID string) error {
     return nil
 }
 
-func (s *AuthenticationService) AuthenticateSession(sessionID string) (*authenticator.AuthenticateSessionResponse, error) {
+func (s *AuthenticationService) AuthenticateSession(sessionID string) (*authenticator.UserSession, error) {
     req := &authenticator.AuthenticateSessionRequest{SessionId: sessionID}
     resp, err := s.client.AuthenticateSession(context.Background(), req)
     if err != nil {
         return nil, HandleGRPCError(err)
     }
-    return resp, nil
+    return resp.UserSession, nil
 }

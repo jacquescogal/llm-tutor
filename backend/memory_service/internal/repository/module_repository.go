@@ -18,21 +18,26 @@ func NewModuleRepository() *ModuleRepository {
 	return &ModuleRepository{}
 }
 
-// CreateModule inserts a new module into the module_tab
-func (repo *ModuleRepository) CreateModule(ctx context.Context, tx *sql.Tx, moduleName, moduleDescription string, isPublic bool) error {
+// CreateModule inserts a new module into the module_tab and returns the module_id
+func (repo *ModuleRepository) CreateModule(ctx context.Context, tx *sql.Tx, moduleName, moduleDescription string, isPublic bool) (uint64, error) {
 	query := `
 		INSERT INTO module_tab (module_name, module_description, is_public, created_time, updated_time)
 		VALUES (?, ?, ?, ?, ?)
 	`
 
 	createdTime := time.Now().Unix()
-	_, err := tx.ExecContext(ctx, query, moduleName, moduleDescription, isPublic, createdTime, createdTime)
+	result, err := tx.ExecContext(ctx, query, moduleName, moduleDescription, isPublic, createdTime, createdTime)
 	if err != nil {
 		log.Printf("Error creating module: %v\n", err)
-		return err
+		return 0, err
+	}
+	moduleId, err := result.LastInsertId()
+	if err != nil {
+		log.Printf("Error getting last inserted id: %v\n", err)
+		return 0, err
 	}
 	log.Println("Module created successfully")
-	return nil
+	return uint64(moduleId), nil
 }
 
 // GetModuleById retrieves a module by module_id

@@ -87,9 +87,10 @@ message DeleteMemoryResponse {
 
 message DBMemory {
   uint64 memory_id = 1;
-  uint64 doc_id = 2;
-  string memory_title = 3;
-  string memory_content = 4;
-  uint64 created_time = 5;
-  uint64 updated_time = 6;
+  uint64 user_id = 2;
+  uint64 doc_id = 3;
+  string memory_title = 4;
+  string memory_content = 5;
+  uint64 created_time = 6;
+  uint64 updated_time = 7;
 }
