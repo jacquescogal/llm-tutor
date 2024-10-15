@@ -1,5 +1,7 @@
 # Readme.md
 
+![alt text](./assets/architecture.png)
+
 ## 1. Setup
 
 1. Have docker installed and replace the placeholders in docker-compose.yml
