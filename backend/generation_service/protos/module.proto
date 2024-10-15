@@ -1,0 +1,175 @@
+// module.proto
+
+syntax = "proto3";
+import "protos/common.proto";
+package module;
+
+
+option go_package = "%replace%/internal/proto/module";
+
+
+
+service ModuleService {
+  rpc CreateModule (CreateModuleRequest) returns (CreateModuleResponse);
+  rpc GetPublicModules (GetPublicModulesRequest) returns (GetPublicModulesResponse); // public modules
+  rpc GetPrivateModulesByUserId (GetPrivateModulesByUserIdRequest) returns (GetPrivateModulesByUserIdResponse); // private modules
+  rpc GetFavouriteModulesByUserId (GetFavouriteModulesByUserIdRequest) returns (GetFavouriteModulesByUserIdResponse); // favourite modules that are either public or authorised
+  rpc GetModuleById (GetModuleByIdRequest) returns (GetModuleByIdResponse);
+  rpc GetModulesBySubjectId (GetModulesBySubjectIdRequest) returns (GetModulesBySubjectIdResponse);
+  rpc GetModulesByNameSearch (GetModulesByNameSearchRequest) returns (GetModulesByNameSearchResponse);
+  rpc UpdateModule (UpdateModuleRequest) returns (UpdateModuleResponse);
+  rpc DeleteModule (DeleteModuleRequest) returns (DeleteModuleResponse);
+
+  rpc SetUserModuleFavourite (SetUserModuleFavouriteRequest) returns (SetUserModuleFavouriteResponse);
+  rpc SetUserModuleRole (SetUserModuleRoleRequest) returns (SetUserModuleRoleResponse);
+
+}
+
+
+// ModuleService
+message CreateModuleRequest {
+    uint64 user_id = 1;
+    string module_name = 2;
+    string module_description = 3;
+    bool is_public = 4;
+  }
+  
+  message CreateModuleResponse {
+  }
+
+  message GetPublicModulesRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetPublicModulesResponse {
+    repeated FullModule modules = 1;
+  }
+
+  message GetPrivateModulesByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetPrivateModulesByUserIdResponse {
+    repeated FullModule modules = 1;
+  }
+
+  message GetFavouriteModulesByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetFavouriteModulesByUserIdResponse {
+    repeated FullModule modules = 1;
+  }
+  
+  message GetModuleByIdRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+  }
+  
+  message GetModuleByIdResponse {
+    FullModule module = 1;
+  }
+  
+  message GetModulesBySubjectIdRequest {
+    uint64 user_id = 1;
+    uint64 subject_id = 2;
+    uint32 page_number = 3;
+    uint32 page_size = 4;
+    common.ORDER_BY_FIELD order_by_field = 5;
+    common.ORDER_BY_DIRECTION order_by_direction = 6;
+  }
+  
+  message GetModulesBySubjectIdResponse {
+    repeated FullModule modules = 1;
+  }
+  
+  message GetModulesByNameSearchRequest {
+    uint64 user_id = 1;
+    string search_query = 2;
+    uint32 page_number = 3;
+    uint32 page_size = 4;
+    common.ORDER_BY_FIELD order_by_field = 5;
+    common.ORDER_BY_DIRECTION order_by_direction = 6;
+  }
+  
+  message GetModulesByNameSearchResponse {
+    repeated FullModule modules = 1;
+  }
+  
+  message UpdateModuleRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    string module_name = 3;
+    string module_description = 4;
+    bool is_public = 5;
+  }
+  
+  message UpdateModuleResponse {
+  }
+  
+  message DeleteModuleRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+  }
+  
+  message DeleteModuleResponse {
+  }
+
+  message SetUserModuleFavouriteRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    bool is_favourite = 3;
+  }
+
+  message SetUserModuleFavouriteResponse {
+  }
+
+  message SetUserModuleRoleRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    common.UserModuleRole user_module_role = 3;
+  }
+
+  message SetUserModuleRoleResponse {
+  }
+
+
+  // Consolidated Models
+  message FullModule {
+    DBModule module = 1;
+    common.UserModuleRole user_module_role = 2;
+    bool is_favourite = 3;
+  }
+
+
+// DB Models
+
+message DBModule {
+    uint64 module_id = 1;
+    string module_name = 2;
+    string module_description = 3;
+    bool is_public = 4;
+    uint64 created_time = 5;
+    uint64 updated_time = 6;
+  }
+
+
+message DBUserModuleMap {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    common.UserModuleRole user_module_role = 3;
+    bool is_favourite = 4;
+  }
+  

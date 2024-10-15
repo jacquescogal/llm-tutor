@@ -9,6 +9,7 @@ type Props = {
 const EditMemoryCard = (props: Props) => {
   const [memoryTitle, setMemoryTitle] = useState(props.memoryTitle);
   const [memoryContent, setMemoryContent] = useState(props.memoryContent);
+  // TODO: allow memory edit 
   return (
     <div
       className="

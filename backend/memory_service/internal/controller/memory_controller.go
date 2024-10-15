@@ -9,6 +9,7 @@ import (
 	modpb "memory_core/internal/proto/module"
 	"memory_core/internal/repository"
 
+	"github.com/google/uuid"
 	"google.golang.org/grpc/codes"
 	"google.golang.org/grpc/status"
 )
@@ -19,10 +20,11 @@ type MemoryController struct {
 	userModuleMapRepo   *repository.UserModuleMapRepository
 	moduleRepo 	*repository.ModuleRepository
 	docRepo *repository.DocRepository
+	vectorRepo *repository.VectorRepository
 }
 
-func NewMemoryController(db *sql.DB, memoryRepo *repository.MemoryRepository, userModuleMapRepo *repository.UserModuleMapRepository, moduleRepo *repository.ModuleRepository, docRepo *repository.DocRepository) *MemoryController {
-	return &MemoryController{db: db, memoryRepo: memoryRepo, userModuleMapRepo: userModuleMapRepo, moduleRepo: moduleRepo, docRepo: docRepo}
+func NewMemoryController(db *sql.DB, memoryRepo *repository.MemoryRepository, userModuleMapRepo *repository.UserModuleMapRepository, moduleRepo *repository.ModuleRepository, docRepo *repository.DocRepository, vectorRepo *repository.VectorRepository) *MemoryController {
+	return &MemoryController{db: db, memoryRepo: memoryRepo, userModuleMapRepo: userModuleMapRepo, moduleRepo: moduleRepo, docRepo: docRepo, vectorRepo: vectorRepo}
 }
 
 // CreateMemory handles the creation of a new memory
@@ -54,10 +56,19 @@ func (c *MemoryController) CreateMemory(ctx context.Context, req *mpb.CreateMemo
 		}
 	}()
 
+	vectorUuid := uuid.New().String()
+
 	// Create memory
-	err = c.memoryRepo.CreateMemory(ctx, tx, req.GetUserId(), req.GetDocId(), req.GetMemoryTitle(), req.GetMemoryContent())
+	err = c.memoryRepo.CreateMemory(ctx, tx,  req.GetDocId(), req.GetUserId(), req.GetMemoryTitle(), req.GetMemoryContent(), vectorUuid)
 	if err != nil {
 		log.Printf("Failed to create memory: %v", err)
+		tx.Rollback()
+		return nil, err
+	}
+
+	err = c.vectorRepo.CreateMemoryVector(ctx, req.ModuleId, req.DocId, vectorUuid, req.MemoryTitle, req.MemoryContent)
+	if err != nil {
+		log.Printf("Failed to create memory vector: %v", err)
 		tx.Rollback()
 		return nil, err
 	}

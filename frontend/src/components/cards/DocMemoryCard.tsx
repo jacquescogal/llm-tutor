@@ -5,7 +5,6 @@ type Props = {
   title: string;
   content: string;
   memoryId: string;
-  createdBy: string;
   createdAt: string;
   updatedAt: string;
 }
@@ -37,10 +36,10 @@ const DocMemoryCard = (props: Props) => {
       </div>
       <div className="flex flex-row justify-between align-middle content-center text-center align-center ">
         <div className="w-full flex flex-row text-left text-xs justify-between select-none text-gray-500">
-          <div className="flex flex-col justify-between  w-full">
+          {/* <div className="flex flex-col justify-between  w-full">
             <span>Uploaded By: </span>
             <span>{props.createdBy}</span>
-          </div>
+          </div> */}
           <div className="flex flex-col justify-between  w-full">
             <span>Uploaded On: </span>
             <span>{props.createdAt}</span>

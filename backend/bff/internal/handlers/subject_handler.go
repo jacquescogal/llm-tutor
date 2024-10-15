@@ -112,3 +112,13 @@ func (h *SubjectHandler) SetUserSubjectFavourite(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{"message": "Subject favourited successfully"})
 }
+
+func (h *SubjectHandler) SetSubjectModuleMapping(c *gin.Context) {
+	// Call the controller to handle SetSubjectModuleMapping logic
+	err := h.controller.SetSubjectModuleMapping(c)
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": err.Error()})
+		return
+	}
+	c.JSON(http.StatusOK, gin.H{"message": "Subject module mapping created successfully"})
+}

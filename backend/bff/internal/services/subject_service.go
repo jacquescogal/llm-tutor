@@ -92,3 +92,12 @@ func (s *SubjectService) SetUserSubjectFavourite(ctx context.Context, req *subje
 	}
 	return nil
 }
+
+
+func (s *SubjectService) SetSubjectModuleMapping(ctx context.Context, req *subject.SetSubjectModuleMappingRequest) error {
+	_, err := s.client.SetSubjectModuleMapping(ctx, req)
+	if err != nil {
+		return HandleGRPCError(err)
+	}
+	return nil
+}

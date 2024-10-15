@@ -15,6 +15,9 @@ service DocService {
   rpc GetDocsByNameSearch (GetDocsByNameSearchRequest) returns (GetDocsByNameSearchResponse);
   rpc UpdateDoc (UpdateDocRequest) returns (UpdateDocResponse);
   rpc DeleteDoc (DeleteDocRequest) returns (DeleteDocResponse);
+
+  rpc UpdateSummary (UpdateSummaryRequest) returns (UpdateSummaryResponse);
+  rpc UpdateUploadStatus (UpdateUploadStatusRequest) returns (UpdateUploadStatusResponse);
 }
 
 
@@ -79,6 +82,8 @@ message CreateDocRequest {
     common.UploadStatus upload_status = 7;
     string s3_object_key = 8;
   }
+
+
   
   message UpdateDocResponse {
   }
@@ -90,6 +95,27 @@ message CreateDocRequest {
   }
   
   message DeleteDocResponse {
+  }
+
+  message UpdateSummaryRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    uint64 doc_id = 3;
+    string doc_summary = 4;
+    common.UploadStatus upload_status = 5;
+  }
+
+  message UpdateSummaryResponse {
+  }
+
+  message UpdateUploadStatusRequest {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    uint64 doc_id = 3;
+    common.UploadStatus upload_status = 4;
+  }
+
+  message UpdateUploadStatusResponse {
   }
 
 

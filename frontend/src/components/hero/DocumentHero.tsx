@@ -1,13 +1,16 @@
 import React from "react";
+import { UploadStatus } from "../../types/enums";
+import { uploadStatusToString } from "../../api/documentService";
 
 type Props = {
   title: string;
   description: string;
   documentId: string;
-  createdBy: string;
+  createdBy?: string;
   createdAt: string;
   updatedAt: string;
   actionItems?: React.ReactNode[];
+  status: UploadStatus;
 };
 
 const DocumentHero = (props: Props) => {
@@ -40,8 +43,8 @@ const DocumentHero = (props: Props) => {
       <div className="flex flex-row justify-between align-middle content-center text-center align-center ">
         <div className="w-full flex flex-row text-left text-xs justify-between select-none text-gray-500">
           <div className="flex flex-col justify-between  w-full">
-            <span>Owned By: </span>
-            <span>{props.createdBy}</span>
+            <span>Status: </span>
+            <span>{uploadStatusToString(props.status)}</span>
           </div>
           <div className="flex flex-col justify-between  w-full">
             <span>Created At: </span>

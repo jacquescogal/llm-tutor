@@ -1,0 +1,133 @@
+// question.proto
+
+syntax = "proto3";
+import "protos/common.proto";
+package question;
+
+option go_package = "%replace%/internal/proto/question";
+
+service QuestionService {
+    rpc CreateQuestion (CreateQuestionRequest) returns (CreateQuestionResponse);
+    rpc GetQuestionById (GetQuestionByIdRequest) returns (GetQuestionByIdResponse);
+    rpc GetQuestionsByDocId (GetQuestionsByDocIdRequest) returns (GetQuestionsByDocIdResponse);
+    rpc GetQuestionsByQuestionTitleSearch (GetQuestionsByQuestionTitleSearchRequest) returns (GetQuestionsByQuestionTitleSearchResponse);
+    rpc UpdateQuestion (UpdateQuestionRequest) returns (UpdateQuestionResponse);
+    rpc DeleteQuestion (DeleteQuestionRequest) returns (DeleteQuestionResponse);
+  }
+
+
+// QuestionService
+message CreateQuestionRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+    string question_title = 3;
+    bytes question_blob = 4;
+    common.QuestionType question_type = 5;
+    uint64 module_id = 6;
+  }
+  
+  message CreateQuestionResponse {
+  }
+
+  message GetQuestionByIdRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+    uint64 question_id = 3;
+    uint64 module_id = 4;
+  }
+  
+  message GetQuestionByIdResponse {
+    DBQuestion question = 1;
+  }
+  
+  message GetQuestionsByDocIdRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+    uint32 page_number = 3;
+    uint32 page_size = 4;
+    common.ORDER_BY_FIELD order_by_field = 5;
+    common.ORDER_BY_DIRECTION order_by_direction = 6;
+    uint64 module_id = 7;
+  }
+  
+  message GetQuestionsByDocIdResponse {
+    repeated DBQuestion questions = 1;
+  }
+  
+  message GetQuestionsByQuestionTitleSearchRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+    string search_query = 3;
+    uint32 page_number = 4;
+    uint32 page_size = 5;
+    common.ORDER_BY_FIELD order_by_field = 6;
+    common.ORDER_BY_DIRECTION order_by_direction = 7;
+    uint64 module_id = 8;
+  }
+  
+  message GetQuestionsByQuestionTitleSearchResponse {
+    repeated DBQuestion questions = 1;
+  }
+  
+  message UpdateQuestionRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+    uint64 question_id = 3;
+    string question_title = 4;
+    bytes question_blob = 5;
+    common.QuestionType question_type = 6;
+    uint64 module_id = 7;
+  }
+  
+  message UpdateQuestionResponse {
+  }
+  
+  message DeleteQuestionRequest {
+    uint64 user_id = 1;
+    uint64 doc_id = 2;
+    uint64 question_id = 3;
+    uint64 module_id = 4;
+  }
+  
+  message DeleteQuestionResponse {
+  }
+  
+
+
+message DBQuestion {
+    uint64 question_id = 1;
+    uint64 user_id = 2;
+    uint64 doc_id = 3;
+    string question_title = 4;
+    bytes question_blob = 5; // refer to MCQQuestion or TextInputQuestion
+    common.QuestionType question_type = 6;
+    uint64 created_time = 7;
+    uint64 updated_time = 8;
+  }
+  
+  // Question Types
+ 
+  
+  message MCQQuestion {
+    repeated MCQChoice choices = 1;
+  }
+
+   message MCQChoice {
+    string choice = 1;
+    bool is_correct = 2;
+  }
+  
+  message TextInputQuestion {
+    string answer = 1;
+  }
+
+  message QuestionReturn {
+    uint64 question_id = 1;
+    uint64 user_id = 2;
+    uint64 doc_id = 3;
+    string question_title = 4;
+    string question_serialized = 5;
+    common.QuestionType question_type = 6;
+    uint64 created_time = 7;
+    uint64 updated_time = 8;
+  }

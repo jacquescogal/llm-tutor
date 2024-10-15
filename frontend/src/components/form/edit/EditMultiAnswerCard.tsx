@@ -1,28 +1,31 @@
 import { useState } from "react";
-import { QuestionOption } from "../../../types/question";
+import { MCQQuestion, QuestionReturn, unserializeQuestion } from "../../../api/questionService";
 
-type Props = {
-  questionId: string;
-  questionBody: string;
-  optionList?: QuestionOption[];
-  answerOptions?: number[];
-};
 
-const EditMuliAnswerCard = (props: Props) => {
-  const [selectedOptions, setSelectedOptions] = useState(props.answerOptions);
-  const [questionBody, setQuestionBody] = useState(props.questionBody);
-  const [optionList, setOptionList] = useState(props.optionList);
+const EditMuliAnswerCard = (props: QuestionReturn) => {
+  const actQuestion:MCQQuestion = unserializeQuestion(props) as MCQQuestion;
+  const [questionBody, setQuestionBody] = useState(props.question_title);
+  const [optionList, setOptionList] = useState(actQuestion.choices.map((choice, index) => {
+    return {
+      optionId: index,
+      choice: choice.choice,
+      isCorrect: choice.isCorrect,
+    };
+  }));
 
   const updateOption = (optionId: number, optionBody: string) => {
     setOptionList(
       optionList?.map((option) => {
         if (option.optionId === optionId) {
-          return { ...option, optionBody };
+          return {
+            ...option,
+            choice: optionBody,
+          };
         }
         return option;
       })
     );
-  };
+  }
 
   const addOption = () => {
     const newOptionId = optionList ? optionList.length + 1 : 1;
@@ -31,25 +34,17 @@ const EditMuliAnswerCard = (props: Props) => {
       ...newOptionList,
       {
         optionId: newOptionId,
-        optionBody: "",
+        choice: "",
+        isCorrect: false,
       },
     ]);
-
-  };
+  }
 
   const deleteOption = (optionId: number) => {
-
-    const newSelectedOptions = selectedOptions?.includes(
-      optionId
-    )
-      ? selectedOptions?.filter(
-          (optionIdItem) => optionIdItem !== optionId
-        )
-      : [...selectedOptions||[1]];
-      console.log(newSelectedOptions)
-    setSelectedOptions(newSelectedOptions);
-    setOptionList(optionList?.filter((option) => option.optionId !== optionId));
-  };
+    setOptionList(
+      optionList?.filter((option) => option.optionId !== optionId)
+    );
+  }
 
   return (
     <div
@@ -66,7 +61,7 @@ const EditMuliAnswerCard = (props: Props) => {
         text-ellipsis
         "
     >
-      <h1 className="truncate h-fit mb-1">Question {props.questionId}</h1>
+      <h1 className="truncate h-fit mb-1">Question {props.question_id}</h1>
       <textarea
         className="text-wrap break-words h-20 overflow-scroll bg-slate-50 shadow-inner p-1 mb-1          
           "
@@ -88,22 +83,24 @@ const EditMuliAnswerCard = (props: Props) => {
                 <input
                   type="checkbox"
                   className="checkbox"
-                  checked={selectedOptions?.includes(option.optionId)}
+                  checked={option.isCorrect}
                   onChange={() => {
-                    const newSelectedOptions = selectedOptions?.includes(
-                      option.optionId
-                    )
-                      ? selectedOptions?.filter(
-                          (optionId) => optionId !== option.optionId
-                        )
-                      : [...selectedOptions|| [], option.optionId];
-
-                    setSelectedOptions(newSelectedOptions);
+                    setOptionList(
+                      optionList?.map((opt) => {
+                        if (opt.optionId === option.optionId) {
+                          return {
+                            ...opt,
+                            isCorrect: !opt.isCorrect,
+                          };
+                        }
+                        return opt;
+                      })
+                    );
                   }}
                 />
                 <input
                   className="w-full text-left mx-1 py-1"
-                  value={option.optionBody}
+                  value={option.choice}
                   onChange={(e) => {
                     updateOption(option.optionId, e.target.value);
                   }}

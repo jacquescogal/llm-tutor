@@ -43,6 +43,16 @@ func (docHandler *DocHandler) UpdateDoc(ctx context.Context, updateDocRequest *d
 	return docHandler.docController.UpdateDoc(ctx, updateDocRequest)
 }
 
+// UpdateSummary updates a document's summary
+func (docHandler *DocHandler) UpdateSummary(ctx context.Context, updateSummaryRequest *document.UpdateSummaryRequest) (*document.UpdateSummaryResponse, error) {
+	return docHandler.docController.UpdateSummary(ctx, updateSummaryRequest)
+}
+
+// UpdateUploadStatus updates a document's upload status
+func (docHandler *DocHandler) UpdateUploadStatus(ctx context.Context, updateUploadStatusRequest *document.UpdateUploadStatusRequest) (*document.UpdateUploadStatusResponse, error) {
+	return docHandler.docController.UpdateUploadStatus(ctx, updateUploadStatusRequest)
+}
+
 // DeleteDoc deletes a document
 func (docHandler *DocHandler) DeleteDoc(ctx context.Context, deleteDocRequest *document.DeleteDocRequest) (*document.DeleteDocResponse, error) {
 	return docHandler.docController.DeleteDoc(ctx, deleteDocRequest)

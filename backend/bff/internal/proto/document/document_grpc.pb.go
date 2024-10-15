@@ -27,6 +27,8 @@ const (
 	DocService_GetDocsByNameSearch_FullMethodName = "/document.DocService/GetDocsByNameSearch"
 	DocService_UpdateDoc_FullMethodName           = "/document.DocService/UpdateDoc"
 	DocService_DeleteDoc_FullMethodName           = "/document.DocService/DeleteDoc"
+	DocService_UpdateSummary_FullMethodName       = "/document.DocService/UpdateSummary"
+	DocService_UpdateUploadStatus_FullMethodName  = "/document.DocService/UpdateUploadStatus"
 )
 
 // DocServiceClient is the client API for DocService service.
@@ -39,6 +41,8 @@ type DocServiceClient interface {
 	GetDocsByNameSearch(ctx context.Context, in *GetDocsByNameSearchRequest, opts ...grpc.CallOption) (*GetDocsByNameSearchResponse, error)
 	UpdateDoc(ctx context.Context, in *UpdateDocRequest, opts ...grpc.CallOption) (*UpdateDocResponse, error)
 	DeleteDoc(ctx context.Context, in *DeleteDocRequest, opts ...grpc.CallOption) (*DeleteDocResponse, error)
+	UpdateSummary(ctx context.Context, in *UpdateSummaryRequest, opts ...grpc.CallOption) (*UpdateSummaryResponse, error)
+	UpdateUploadStatus(ctx context.Context, in *UpdateUploadStatusRequest, opts ...grpc.CallOption) (*UpdateUploadStatusResponse, error)
 }
 
 type docServiceClient struct {
@@ -109,6 +113,26 @@ func (c *docServiceClient) DeleteDoc(ctx context.Context, in *DeleteDocRequest, 
 	return out, nil
 }
 
+func (c *docServiceClient) UpdateSummary(ctx context.Context, in *UpdateSummaryRequest, opts ...grpc.CallOption) (*UpdateSummaryResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateSummaryResponse)
+	err := c.cc.Invoke(ctx, DocService_UpdateSummary_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *docServiceClient) UpdateUploadStatus(ctx context.Context, in *UpdateUploadStatusRequest, opts ...grpc.CallOption) (*UpdateUploadStatusResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(UpdateUploadStatusResponse)
+	err := c.cc.Invoke(ctx, DocService_UpdateUploadStatus_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // DocServiceServer is the server API for DocService service.
 // All implementations must embed UnimplementedDocServiceServer
 // for forward compatibility.
@@ -119,6 +143,8 @@ type DocServiceServer interface {
 	GetDocsByNameSearch(context.Context, *GetDocsByNameSearchRequest) (*GetDocsByNameSearchResponse, error)
 	UpdateDoc(context.Context, *UpdateDocRequest) (*UpdateDocResponse, error)
 	DeleteDoc(context.Context, *DeleteDocRequest) (*DeleteDocResponse, error)
+	UpdateSummary(context.Context, *UpdateSummaryRequest) (*UpdateSummaryResponse, error)
+	UpdateUploadStatus(context.Context, *UpdateUploadStatusRequest) (*UpdateUploadStatusResponse, error)
 	mustEmbedUnimplementedDocServiceServer()
 }
 
@@ -146,6 +172,12 @@ func (UnimplementedDocServiceServer) UpdateDoc(context.Context, *UpdateDocReques
 }
 func (UnimplementedDocServiceServer) DeleteDoc(context.Context, *DeleteDocRequest) (*DeleteDocResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteDoc not implemented")
+}
+func (UnimplementedDocServiceServer) UpdateSummary(context.Context, *UpdateSummaryRequest) (*UpdateSummaryResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateSummary not implemented")
+}
+func (UnimplementedDocServiceServer) UpdateUploadStatus(context.Context, *UpdateUploadStatusRequest) (*UpdateUploadStatusResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method UpdateUploadStatus not implemented")
 }
 func (UnimplementedDocServiceServer) mustEmbedUnimplementedDocServiceServer() {}
 func (UnimplementedDocServiceServer) testEmbeddedByValue()                    {}
@@ -276,6 +308,42 @@ func _DocService_DeleteDoc_Handler(srv interface{}, ctx context.Context, dec fun
 	return interceptor(ctx, in, info, handler)
 }
 
+func _DocService_UpdateSummary_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateSummaryRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DocServiceServer).UpdateSummary(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DocService_UpdateSummary_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DocServiceServer).UpdateSummary(ctx, req.(*UpdateSummaryRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _DocService_UpdateUploadStatus_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(UpdateUploadStatusRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(DocServiceServer).UpdateUploadStatus(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: DocService_UpdateUploadStatus_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(DocServiceServer).UpdateUploadStatus(ctx, req.(*UpdateUploadStatusRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // DocService_ServiceDesc is the grpc.ServiceDesc for DocService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -306,6 +374,14 @@ var DocService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteDoc",
 			Handler:    _DocService_DeleteDoc_Handler,
+		},
+		{
+			MethodName: "UpdateSummary",
+			Handler:    _DocService_UpdateSummary_Handler,
+		},
+		{
+			MethodName: "UpdateUploadStatus",
+			Handler:    _DocService_UpdateUploadStatus_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

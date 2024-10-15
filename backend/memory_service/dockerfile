@@ -1,0 +1,14 @@
+# Use the official Golang image to build the Go service
+FROM golang:1.23.2
+
+# Set the working directory inside the container
+WORKDIR /app
+
+# Copy the Go project files from the local context to the container
+COPY . .
+
+# Build the Go app
+RUN go build -o /bin/server cmd/main.go
+
+# Run the Go app
+CMD ["/bin/server"]

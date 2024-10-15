@@ -1,4 +1,4 @@
-import { OrderByDirection, OrderByField } from "../types/enums";
+import { OrderByDirection, OrderByField, QuestionType } from "../types/enums";
 import { apiClient } from "./client";
 
 // Payload and Response Interfaces
@@ -46,22 +46,18 @@ export const getQuestionById = async (
 };
 
 export interface GetQuestionsByDocIdPayload {
-  user_id: number;
   page_number: number;
   
   sort_by: OrderByField;
   order: OrderByDirection;
 }
 
-export interface GetQuestionsByDocIdResponse {
-  questions: DBQuestion[];
-}
 
 export const getQuestionsByDocId = async (
   module_id: number,
   document_id: number,
   payload: GetQuestionsByDocIdPayload
-): Promise<GetQuestionsByDocIdResponse> => {
+): Promise<QuestionReturn[]> => {
   const response = await apiClient.get(`/module/${module_id}/document/${document_id}/question`, {
     params: payload,
   });
@@ -140,7 +136,57 @@ export interface DBQuestion {
   doc_id: number;
   question_title: string;
   question_blob: Uint8Array;
-  question_type: string;
+  question_type: number;
   created_time: number;
   updated_time: number;
 }
+
+
+// QuestionReturn interface
+export interface QuestionReturn {
+  question_id: number;
+  user_id: number;
+  doc_id: number;
+  question_title: string;
+  question_serialized: string;
+  question_type: QuestionType;
+  created_time: number;
+  updated_time: number;
+}
+
+// unserializedQuestion types
+export interface MCQQuestion {
+  choices: MCQChoice[];
+}
+
+export interface MCQChoice {
+  choice: string;
+  isCorrect: boolean;
+}
+
+export interface TextInputQuestion {
+  answer: string;
+}
+
+export const unserializeQuestion = (question: QuestionReturn): MCQQuestion | TextInputQuestion | null => {
+  let unserializedQuestion: MCQQuestion | TextInputQuestion | null = null;
+
+  switch (question.question_type) {
+    case QuestionType.QUESTION_TYPE_MCQ:
+    case QuestionType.QUESTION_TYPE_MULTI_ANSWER_MCQ:
+      // If the question type is MCQ or Multi-answer MCQ, parse it as MCQQuestion
+      unserializedQuestion = JSON.parse(question.question_serialized) as MCQQuestion;
+      break;
+
+    case QuestionType.QUESTION_TYPE_OPEN_ENDED:
+      // If the question type is Open Ended, parse it as TextInputQuestion
+      unserializedQuestion = JSON.parse(question.question_serialized) as TextInputQuestion;
+      break;
+
+    default:
+      throw new Error(`Unsupported question type: ${question.question_type}`);
+  }
+
+  // Return the original QuestionReturn object with the unserialized question as the serialized question
+  return unserializedQuestion;
+};

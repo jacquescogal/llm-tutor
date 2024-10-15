@@ -17,10 +17,11 @@ type SubjectController struct {
 	db *sql.DB
 	subjectRepo *repository.SubjectRepository
 	userSubjectMapRepo *repository.UserSubjectMapRepository
+	subjectModuleMapRepo *repository.SubjectModuleMapRepository
 }
 
-func NewSubjectController(db *sql.DB, subjectRepo *repository.SubjectRepository, userSubjectMapRepo *repository.UserSubjectMapRepository) *SubjectController {
-	return &SubjectController{db: db, subjectRepo: subjectRepo, userSubjectMapRepo: userSubjectMapRepo}
+func NewSubjectController(db *sql.DB, subjectRepo *repository.SubjectRepository, userSubjectMapRepo *repository.UserSubjectMapRepository, subjectModuleMapRepo *repository.SubjectModuleMapRepository) *SubjectController {
+	return &SubjectController{db: db, subjectRepo: subjectRepo, userSubjectMapRepo: userSubjectMapRepo, subjectModuleMapRepo: subjectModuleMapRepo}
 }
 
 // CreateSubject handles the business logic for creating a new subject
@@ -230,6 +231,68 @@ func (c *SubjectController) UpdateSubject(ctx context.Context, req *mpb.UpdateSu
 
 	log.Println("Subject updated successfully")
 	return &mpb.UpdateSubjectResponse{}, nil
+}
+
+func (c *SubjectController) SetSubjectModuleMapping(ctx context.Context, req *mpb.SetSubjectModuleMappingRequest) (*mpb.SetSubjectModuleMappingResponse, error){
+	// validate input
+	if req.GetUserId() == 0 {
+		log.Println("User ID is required")
+		return nil, status.Error(codes.InvalidArgument, "User ID is required")
+	} else if req.GetSubjectId() == 0 {
+		log.Println("Subject ID is required")
+		return nil, status.Error(codes.InvalidArgument, "Subject ID is required")
+	} else if req.GetModuleIds() == nil  {
+		// set to empty array if nil
+		req.ModuleIds = []uint64{}
+	}
+
+	// check if user is an admin or owner of the subject
+	memberAccess, err := c.userSubjectMapRepo.GetUserSubjectMapping(ctx, c.db, req.GetUserId(), req.GetSubjectId())
+	if err != nil {
+		log.Printf("Failed to get member access: %v", err)
+		return nil, err
+	}
+
+	if err := validateMemberEditPrivileges(memberAccess.GetUserSubjectRole()); err != nil {
+		log.Printf("User does not have permission to edit subject: %v", err)
+		return nil, err
+	}
+
+	// begin transaction
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to begin transaction: %v", err)
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Printf("Recovered from panic: %v", r)
+		}
+	}()
+
+	// set subject module mapping
+	err = c.subjectModuleMapRepo.DeleteSubjectModuleMappingsBySubjectId(ctx, tx, req.GetSubjectId())
+	if err != nil {
+		log.Printf("Failed to delete subject module mapping: %v", err)
+		tx.Rollback()
+		return nil, err
+	}
+	if len(req.GetModuleIds()) != 0 {
+	err = c.subjectModuleMapRepo.CreateSubjectModuleMappings(ctx, tx, req.GetSubjectId(), req.GetModuleIds())
+	if err != nil {
+		log.Printf("Failed to set subject module mapping: %v", err)
+		tx.Rollback()
+		return nil, err
+	}
+}
+	if err := tx.Commit(); err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
+		return nil, err
+	}
+	
+	return &mpb.SetSubjectModuleMappingResponse{}, nil
 }
 
 // DeleteSubject handles the business logic for deleting a subject

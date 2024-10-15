@@ -1,4 +1,5 @@
 package repository
+
 // DONE
 import (
 	"context"
@@ -7,6 +8,7 @@ import (
 	"log"
 	"memory_core/internal/cache"
 	mpb "memory_core/internal/proto/subject"
+	"strings"
 )
 
 type SubjectModuleMapRepository struct {
@@ -31,6 +33,34 @@ func (repo *SubjectModuleMapRepository) CreateSubjectModuleMapping(ctx context.C
 	log.Println("Subject module mapping created successfully")
 	return nil
 }
+
+// CreateSubjectModuleMappings inserts multiple module mappings for a single subject into subject_module_map_tab in a batch
+func (repo *SubjectModuleMapRepository) CreateSubjectModuleMappings(ctx context.Context, tx *sql.Tx, subjectId uint64, moduleIds []uint64) error {
+	// Base query
+	query := `INSERT INTO subject_module_map_tab (subject_id, module_id) VALUES `
+
+	// Prepare placeholders and values
+	values := []interface{}{}
+	placeholders := []string{}
+	for _, moduleId := range moduleIds {
+		placeholders = append(placeholders, "(?, ?)")
+		values = append(values, subjectId, moduleId)
+	}
+
+	// Join the placeholders to form the full query
+	query += strings.Join(placeholders, ", ")
+
+	// Execute the batch insert query
+	_, err := tx.ExecContext(ctx, query, values...)
+	if err != nil {
+		log.Printf("Error creating subject module mappings: %v\n", err)
+		return err
+	}
+
+	log.Println("Batch subject module mappings created successfully")
+	return nil
+}
+
 
 
 // GetSubjectModuleMapping retrieves a subject module mapping by subject_id and module_id
@@ -68,6 +98,35 @@ func (repo *SubjectModuleMapRepository) GetSubjectModuleMapping(ctx context.Cont
 	return &subjectModuleMapping, nil
 }
 
+// GetSubjectModuleMappingBySubjectId retrieves all module mappings for a single subject by subject_id
+func (repo *SubjectModuleMapRepository) GetSubjectModuleMappingBySubjectId(ctx context.Context, db *sql.DB, subjectId uint64) ([]*mpb.DBSubjectModuleMap, error) {
+	query := `
+		SELECT subject_id, module_id
+		FROM subject_module_map_tab
+		WHERE subject_id = ?
+	`
+	rows, err := db.QueryContext(ctx, query, subjectId)
+	if err != nil {
+		log.Printf("Error getting subject module mappings: %v\n", err)
+		return nil, err
+	}
+	defer rows.Close()
+
+	var subjectModuleMappings []*mpb.DBSubjectModuleMap
+	for rows.Next() {
+		var subjectModuleMapping mpb.DBSubjectModuleMap
+		err := rows.Scan(&subjectModuleMapping.SubjectId, &subjectModuleMapping.ModuleId)
+		if err != nil {
+			log.Printf("Error scanning subject module mapping row: %v\n", err)
+			return nil, err
+		}
+		subjectModuleMappings = append(subjectModuleMappings, &subjectModuleMapping)
+	}
+	log.Printf("Retrieved %d subject module mappings\n", len(subjectModuleMappings))
+	return subjectModuleMappings, nil
+}
+
+
 // DeleteSubjectModuleMapping deletes a subject module mapping by subject_id and module_id
 func (repo *SubjectModuleMapRepository) DeleteSubjectModuleMapping(ctx context.Context, tx *sql.Tx, subjectId, moduleId uint64) error {
 	// Deletes the mapping between a subject and a module
@@ -88,6 +147,7 @@ func (repo *SubjectModuleMapRepository) DeleteSubjectModuleMapping(ctx context.C
 // DeleteSubjectModuleMappingsBySubjectId deletes all subject module mappings by subject_id
 func (repo *SubjectModuleMapRepository) DeleteSubjectModuleMappingsBySubjectId(ctx context.Context, tx *sql.Tx, subjectId uint64) error {
 	// Should not be called as the cascade delete is enabled, and if subject is deleted, all its mappings will be deleted
+	fmt.Println(subjectId)
 	query := `
 		DELETE FROM subject_module_map_tab
 		WHERE subject_id = ?

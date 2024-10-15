@@ -9,6 +9,7 @@ import { unixToDateString } from "../../utilities/timeUtilities";
 import { OrderByDirection, OrderByField } from "../../types/enums";
 import { sortByMap } from "../../utilities/constants";
 import SearchBar from "../../components/search/SearchBar";
+import { IoRefresh } from "react-icons/io5";
 
 
 
@@ -60,6 +61,8 @@ const ExploreSubjectPage = () => {
       <h1>Explore Subjects</h1>
       <SearchBar search={search} setSearch={(val:string) => {setSearch(val)}} startSearch={()=>{setSearchPrompt(search)}} />
       <div className="flex flex-row w-96 justify-end items-center">
+
+      <button className="mr-2"><IoRefresh/></button>
         <Select name="Order By" items={Object.keys(sortByMap)} setSelected={(val:string)=>{setSortBy(sortByMap[val]);}}/>
         <ToggleCheck
           isChecked={isAsc}

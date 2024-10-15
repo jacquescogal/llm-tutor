@@ -94,6 +94,7 @@ CREATE TABLE IF NOT EXISTS memory_tab (
     memory_content TEXT NOT NULL,                                                    -- Memory content field with TEXT data type and NOT NULL constraint
     created_time BIGINT UNSIGNED NOT NULL,                                           -- Created time field with BIGINT UNSIGNED data type and NOT NULL constraint
     updated_time BIGINT UNSIGNED NOT NULL,                                      -- Last updated time field with BIGINT UNSIGNED data type and NOT NULL constraint
+    vector_uuid VARCHAR(255) NOT NULL,                                              -- Vector UUID field with max length 255 and NOT NULL constraint
     FOREIGN KEY (doc_id) REFERENCES doc_tab(doc_id) ON DELETE CASCADE                -- Foreign key constraint
 ); -- memory_tab table stores the memory information related to a document.
 

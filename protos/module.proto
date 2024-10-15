@@ -22,6 +22,7 @@ service ModuleService {
 
   rpc SetUserModuleFavourite (SetUserModuleFavouriteRequest) returns (SetUserModuleFavouriteResponse);
   rpc SetUserModuleRole (SetUserModuleRoleRequest) returns (SetUserModuleRoleResponse);
+
 }
 
 
@@ -143,6 +144,7 @@ message CreateModuleRequest {
 
   message SetUserModuleRoleResponse {
   }
+
 
   // Consolidated Models
   message FullModule {

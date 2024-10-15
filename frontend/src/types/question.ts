@@ -1,12 +1,8 @@
+import { QuestionType } from "./enums";
+
 export interface QuestionOption {
   optionId: number;
   optionBody: string;
-}
-
-export enum QuestionType {
-  singleAnswer = "singleAnswer",
-  multiAnswer = "multiAnswer",
-  openEnded = "openEnded",
 }
 
 export type QuestionProps = {

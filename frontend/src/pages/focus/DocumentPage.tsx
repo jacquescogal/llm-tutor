@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import Select from "../../components/select/Select";
 import ToggleCheck from "../../components/checkbox/ToggleCheck";
 import { TiArrowSortedDown, TiArrowSortedUp } from "react-icons/ti";
@@ -8,17 +8,27 @@ import { useLocation } from "react-router-dom";
 import { CrumbHelperPushLink } from "../../store/helpers/crumbHelper";
 import DocumentHero from "../../components/hero/DocumentHero";
 import TabGroup from "../../components/tab/TabGroup";
-import ModalButton from "../../components/modal/ModalButton";
 import DocMemoryCard from "../../components/cards/DocMemoryCard";
-import EditQuestionCard, {
-  EditQuestionProps,
-} from "../../components/form/edit/EditQuestionCard";
-import { QuestionType } from "../../types/question";
-import DocQuestionCard, { DocQuestionCardProp } from "../../components/cards/DocQuestionCard";
+import DocQuestionCard from "../../components/cards/DocQuestionCard";
+import { OrderByDirection, OrderByField, UploadStatus } from "../../types/enums";
+import { DBMemory, getMemoriesByDocId, GetMemoriesByDocIdResponse } from "../../api/memoryService";
+import { sortByMap } from "../../utilities/constants";
+import { unixToDateString } from "../../utilities/timeUtilities";
+import { getQuestionsByDocId, QuestionReturn } from "../../api/questionService";
+import ChatCard from "../../components/form/ChatCard";
+import { ID_TYPE } from "../../types/chat";
+import ModalSpan from "../../components/modal/ModalSpan";
+import { DBDoc, getDocumentById, GetDocumentByIdResponse } from '../../api/documentService';
+import QuestionPage from "../questions/QuestionPage";
 
 const DocumentPage = () => {
+  const [docHeroDetails, setDocHeroDetails] =
+    React.useState<DBDoc | null>(null);
   const tabs = ["Memories", "Questions"];
   const [isAsc, setIsAsc] = React.useState(false);
+  const [sortBy, setSortBy] = React.useState<OrderByField>(
+    OrderByField.ORDER_BY_FIELD_ID
+  );
   const [chosenTab, setChosenTab] = React.useState(tabs[0]);
   const location = useLocation();
   const locationPath = location.pathname.split("/");
@@ -29,92 +39,108 @@ const DocumentPage = () => {
     locationPath.pop();
   }
   const documentId = locationPath.pop() || "";
-  CrumbHelperPushLink({ name: `Document:${documentId}` });
-  const memories = [
-    {
-      title: "Math",
-      documentId: "123",
-      createdBy: "John Doe",
-      createdAt: "2021-09-27",
-      updatedAt: "2021-09-27",
-      content: "hello",
-    },
-  ];
+  locationPath.pop();
+  const moduleId = locationPath.pop() || "";
+  CrumbHelperPushLink({ name: `Document: #${documentId.padStart(5, "0")}`});
+  const [memories, setMemories] = useState<DBMemory[]>([]);
+  const [questions, setQuestions] = useState<QuestionReturn[]>([]);
+  
+  // export interface GetMemoriesByDocIdPayload {
+  // page_number: number;
+  
+  // sort_by: OrderByField;
+  // order: OrderByDirection;
 
-  const questions: DocQuestionCardProp[] = [
-    {
-      createdBy: "John Doe",
-      createdAt: "2021-09-27",
-      updatedAt: "2021-09-27",
-      editQuestion: {
-        questionType: QuestionType.singleAnswer,
-        questionId: "123",
-        questionBody: "What is 1 + 1?",
-        optionList: [
-          { optionId: 1, optionBody: "1" },
-          { optionId: 2, optionBody: "2" },
-          { optionId: 3, optionBody: "3" },
-          { optionId: 4, optionBody: "4" },
-        ],
-        answer: "2",
-        answerOption: 2,
-        answerOptions: [],
-      },
-    },
-    {
-      createdBy: "John Doe",
-      createdAt: "2021-09-27",
-      updatedAt: "2021-09-27",
-      editQuestion: {
-        questionType: QuestionType.multiAnswer,
-        questionId: "123",
-        questionBody: "what countries are in Africa?",
-        optionList: [
-          { optionId: 1, optionBody: "Nigeria" },
-          { optionId: 2, optionBody: "Ghana" },
-          { optionId: 3, optionBody: "USA" },
-          { optionId: 4, optionBody: "UK" },
-        ],
-        answer: "2",
-        answerOption: 1,
-        answerOptions: [1, 2],
-      },
-    },
-    {
-      createdBy: "John Doe",
-      createdAt: "2021-09-27",
-      updatedAt: "2021-09-27",
-      editQuestion: {
-        questionType: QuestionType.openEnded,
-        questionId: "123",
-        questionBody: "What is 1 + 1?",
-        optionList: [],
-        answer: "2",
-        answerOption: 1,
-        answerOptions: [],
-      },
-    },
-  ];
+  useEffect(() => {
+    const fetchDocument = async () => {
+      try {
+        const response: GetDocumentByIdResponse = await getDocumentById(Number(moduleId),Number(documentId));
+        console.log(response);
+        setDocHeroDetails(response.doc);
+      } catch (e) {
+        if (e instanceof Error) {
+          console.log(e);
+        } else {
+          console.log(e);
+        }
+      }
+    };
+
+    fetchDocument();
+  }, []);
+
+  useEffect(() => {
+    const fetchDocuments = async () => {
+      const moduleId = 1
+      const payload = {
+        page_number: 1,
+        sort_by: sortBy,
+        order: isAsc
+          ? OrderByDirection.ORDER_BY_DIRECTION_ASC
+          : OrderByDirection.ORDER_BY_DIRECTION_DESC,
+      }
+      try {
+        const response: GetMemoriesByDocIdResponse = await getMemoriesByDocId(
+          moduleId, Number(documentId), payload
+      );
+        console.log(response.memories);
+        setMemories(response.memories);
+      } catch (e) {
+        if (e instanceof Error) {
+          console.log(e);
+        } else {
+          console.log(e);
+        }
+      }
+    };
+
+    fetchDocuments();
+  }, []);
+
+  useEffect(() => {
+    const fetchQuestions = async () => {
+      const moduleId = 1
+      const payload = {
+        page_number: 1,
+        sort_by: sortBy,
+        order: isAsc
+          ? OrderByDirection.ORDER_BY_DIRECTION_ASC
+          : OrderByDirection.ORDER_BY_DIRECTION_DESC,
+      }
+      try {
+        const response: QuestionReturn[] = await getQuestionsByDocId(
+          moduleId, Number(documentId), payload
+      );
+        console.log(response);
+        setQuestions(response);
+      } catch (e) {
+        if (e instanceof Error) {
+          console.log(e);
+        } else {
+          console.log(e);
+        }
+      }
+    };
+
+    fetchQuestions();
+  }, []);
+
   return (
     <div className="flex flex-col items-center relative z-0">
       <div className="sticky top-0  bg-base-100 w-full flex justify-center z-10">
         <DocumentHero
-          title="Mathematics"
-          description='Mathematics is the study of numbers, shapes and patterns. The word comes from the Greek word "μάθημα" (máthema), meaning "science, knowledge, or learning", and is sometimes shortened to maths (in England, Australia, Ireland, and New Zealand) or math (in the United States and Canada).Mathematics is the study of numbers, shapes and patterns. The word comes from the Greek word "μάθημα" (máthema), meaning "science, knowledge, or learning", and is sometimes shortened to maths (in England, Australia, Ireland, and New Zealand) or math (in the United States and Canada).Mathematics is the study of numbers, shapes and patterns. The word comes from the Greek word "μάθημα" (máthema), meaning "science, knowledge, or learning", and is sometimes shortened to maths (in England, Australia, Ireland, and New Zealand) or math (in the United States and Canada).Mathematics is the study of numbers, shapes and patterns. The word comes from the Greek word "μάθημα" (máthema), meaning "science, knowledge, or learning", and is sometimes shortened to maths (in England, Australia, Ireland, and New Zealand) or math (in the United States and Canada).Mathematics is the study of numbers, shapes and patterns. The word comes from the Greek word "μάθημα" (máthema), meaning "science, knowledge, or learning", and is sometimes shortened to maths (in England, Australia, Ireland, and New Zealand) or math (in the United States and Canada).Mathematics is the study of numbers, shapes and patterns. The word comes from the Greek word "μάθημα" (máthema), meaning "science, knowledge, or learning", and is sometimes shortened to maths (in England, Australia, Ireland, and New Zealand) or math (in the United States and Canada).Mathematics is the study of numbers, shapes and patterns. The word comes from the Greek word "μάθημα" (máthema), meaning "science, knowledge, or learning", and is sometimes shortened to maths (in England, Australia, Ireland, and New Zealand) or math (in the United States and Canada).Mathematics is the study of numbers, shapes and patterns. The word comes from the Greek word "μάθημα" (máthema), meaning "science, knowledge, or learning", and is sometimes shortened to maths (in England, Australia, Ireland, and New Zealand) or math (in the United States and Canada).'
+          title={docHeroDetails?.doc_name || "Loading..."}
+          description={docHeroDetails?.doc_summary || "Loading..."}
           documentId={documentId}
-          createdBy="John Doe"
-          createdAt="2021-09-27"
-          updatedAt="2021-09-27"
+          // createdBy="John Doe"
+          status={docHeroDetails && docHeroDetails?.upload_status || UploadStatus.UPLOAD_STATUS_PROCESSING}
+          createdAt={docHeroDetails && unixToDateString(docHeroDetails?.created_time) || "Loading..."}
+          updatedAt={docHeroDetails && unixToDateString(docHeroDetails?.updated_time) || "Loading..."}
         />
       </div>
       <TabGroup chosenTab={chosenTab} tabs={tabs} setChosenTab={setChosenTab} />
 
-      <ModalButton buttonName="Create Module">
-        <div>
-          <h1>Modal</h1>
-          <p>Modal Content</p>
-        </div>
-      </ModalButton>
+      
 
       <div className="top-20 flex flex-row w-96 justify-end items-center my-1">
         {/* TODO: Add actions like
@@ -125,7 +151,7 @@ const DocumentPage = () => {
         add create module action below the modules
         */}
         <span className="w-96 text-start font-bold">{chosenTab}:</span>
-        <Select name="Order By" items={["Title", "Date"]} />
+        <Select name="Order By" items={Object.keys(sortByMap)} setSelected={s=>{setSortBy(sortByMap[s])}} />
         <ToggleCheck
           isChecked={isAsc}
           checkName="Asc"
@@ -138,18 +164,19 @@ const DocumentPage = () => {
       <div className="grid grid-cols-1 gap-2 w-96 mx-4 mb-1 h-fit min-h-40 max-h-96 overflow-y-scroll border-t-2 border-b-2 border-gray-200 shadow-inset bg-secondary p-2 ">
         {chosenTab === tabs[0] && (
           <>
-            {memories.length === 0 && (
+            {!memories || memories.length === 0 && (
               <span className="text-center">No modules found</span>
             )}
-            {memories.map((memory, index) => (
+            {memories && memories.map((memory, index) => (
               <DocMemoryCard
                 key={index}
-                title={memory.title}
-                content={memory.content}
-                memoryId={memory.documentId}
-                createdBy={memory.createdBy}
-                createdAt={memory.createdAt}
-                updatedAt={memory.updatedAt}
+                title={memory.memory_title}
+                content={memory.memory_content}
+                memoryId={String(memory.memory_id)}
+
+                // createdBy={u
+                createdAt={unixToDateString(memory.created_time)}
+                updatedAt={unixToDateString(memory.updated_time)}
               />
             ))}
           </>
@@ -157,16 +184,13 @@ const DocumentPage = () => {
 
         {chosenTab === tabs[1] && (
           <>
-            {questions.length === 0 && (
+            {!questions || questions.length === 0 && (
               <span className="text-center">No questions found</span>
             )}
-            {questions.map((question, index) => (
+            {questions && questions.map((question, index) => (
               <DocQuestionCard
                 key={index}
-                createdBy={question.createdBy}
-                createdAt={question.createdAt}
-                updatedAt={question.updatedAt}
-                editQuestion={question.editQuestion}
+                {...question}
               />
             ))}
           </>
@@ -176,7 +200,16 @@ const DocumentPage = () => {
         <Dropdown
           dropSymbol={<IoMdMenu />}
           dropName="Actions"
-          items={["Test Subject", "Speak to AI Mentor"]}
+          items={[<ModalSpan buttonName="Test Me" className="w-40 py-2 align-text-left text-left">
+            <QuestionPage 
+            />
+          </ModalSpan>, 
+            <ModalSpan buttonName="Speak to AI Mentor" className="w-40 py-2 align-text-left text-left">
+            <ChatCard 
+            id={Number(documentId)}
+            id_type={ID_TYPE.DOCUMENT}
+            />
+          </ModalSpan>]}
         />
       </div>
     </div>

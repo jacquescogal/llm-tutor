@@ -1,6 +1,7 @@
 import { configureStore } from '@reduxjs/toolkit';
 import drawerOpenReducer from './drawerOpen';
 import breadCrumbReducer from './breadcrumbSlice';
+import isLoadingReducer from './loaderSlice';
 import {
   persistStore,
   persistReducer,
@@ -17,6 +18,7 @@ import { combineReducers } from 'redux';
 const rootReducer = combineReducers({
   drawerOpen: drawerOpenReducer,
   breadCrumbList: breadCrumbReducer,
+  isLoading: isLoadingReducer,
 });
 
 const persistConfig = {

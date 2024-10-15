@@ -9,6 +9,7 @@ require (
 	github.com/aws/aws-sdk-go-v2/service/s3 v1.65.0
 	github.com/gin-contrib/cors v1.7.2
 	github.com/gin-gonic/gin v1.10.0
+	github.com/golang/protobuf v1.5.0
 	github.com/joho/godotenv v1.5.1
 	google.golang.org/grpc v1.67.0
 	google.golang.org/protobuf v1.34.2

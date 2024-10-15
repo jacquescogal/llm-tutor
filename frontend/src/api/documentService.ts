@@ -1,4 +1,4 @@
-import { OrderByDirection, OrderByField } from "../types/enums";
+import { OrderByDirection, OrderByField, UploadStatus } from "../types/enums";
 import { apiClient } from "./client";
 
 
@@ -125,8 +125,23 @@ export interface DBDoc {
   doc_name: string;
   doc_description: string;
   doc_summary: string;
-  upload_status: string;
+  upload_status: UploadStatus;
   s3_object_key: string;
   created_time: number;
   updated_time: number;
+}
+
+export const uploadStatusToString = (status: UploadStatus): string => {
+  switch (status) {
+    case UploadStatus.UPLOAD_STATUS_QUEUEING:
+      return "Queueing";
+    case UploadStatus.UPLOAD_STATUS_PROCESSING:
+      return "Processing";
+    case UploadStatus.UPLOAD_STATUS_FAILED:
+      return "Failed";
+    case UploadStatus.UPLOAD_STATUS_SUCCESS:
+      return "Success";
+    default:
+      return "Unknown";
+  }
 }

@@ -67,10 +67,25 @@ button {
   transition: border-color 0.25s;
   user-select: none;
 }
+
+button:disabled {
+  color: #a0a0a0;
+  border-color: #e0e0e0;
+  cursor: not-allowed;
+}
+
+/* Override hover for disabled buttons */
+button:disabled:hover {
+  background-color: white; /* Restore original background */
+  color: #a0a0a0;          /* Keep disabled text color */
+  border-color: #e0e0e0;   /* Keep disabled border color */
+}
+
 button:hover {
   background-color: black;
   color: white;
 }
+
 
 @media (prefers-color-scheme: light) {
   :root {

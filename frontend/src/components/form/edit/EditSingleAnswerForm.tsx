@@ -1,22 +1,25 @@
 import { useState } from "react";
-import { QuestionOption } from "../../../types/question";
-type Props = {
-  questionId: string;
-  questionBody: string;
-  optionList?: QuestionOption[];
-  answerOption?: number;
-};
+import { MCQQuestion, QuestionReturn, unserializeQuestion } from "../../../api/questionService";
 
-const EditSingleAnswerForm = (props: Props) => {
-  const [selectedOption, setSelectedOption] = useState(props.answerOption);
-  const [questionBody, setQuestionBody] = useState(props.questionBody);
-  const [optionList, setOptionList] = useState(props.optionList);
+const EditSingleAnswerForm = (props: QuestionReturn) => {
+  const actQuestion:MCQQuestion = unserializeQuestion(props) as MCQQuestion;
+  const [questionBody, setQuestionBody] = useState(props.question_title);
+  const [optionList, setOptionList] = useState(actQuestion.choices.map((choice, index) => {
+    return {
+      optionId: index,
+      choice: choice.choice,
+      isCorrect: choice.isCorrect,
+    };
+  }));
 
   const updateOption = (optionId: number, optionBody: string) => {
     setOptionList(
       optionList?.map((option) => {
         if (option.optionId === optionId) {
-          return { ...option, optionBody };
+          return {
+            ...option,
+            choice: optionBody,
+          };
         }
         return option;
       })
@@ -30,7 +33,8 @@ const EditSingleAnswerForm = (props: Props) => {
       ...newOptionList,
       {
         optionId: newOptionId,
-        optionBody: "",
+        choice: "",
+        isCorrect: false,
       },
     ]);
   }
@@ -56,7 +60,7 @@ const EditSingleAnswerForm = (props: Props) => {
         text-ellipsis
         "
     >
-      <h1 className="truncate h-fit mb-1">Question {props.questionId}</h1>
+      <h1 className="truncate h-fit mb-1">Question {props.question_id}</h1>
       <textarea
         className="text-wrap break-words h-20 overflow-scroll bg-slate-50 shadow-inner p-1 mb-1          
           "
@@ -82,13 +86,26 @@ const EditSingleAnswerForm = (props: Props) => {
                   type="radio"
                   name="radioOption"
                   className="radio "
-                  checked={selectedOption === option.optionId}
+                  checked={option.isCorrect}
                   onChange={() => {
-                    setSelectedOption(option.optionId);
+                    setOptionList(
+                      optionList?.map((opt) => {
+                        if (opt.optionId === option.optionId) {
+                          return {
+                            ...opt,
+                            isCorrect: true,
+                          };
+                        }
+                        return {
+                          ...opt,
+                          isCorrect: false,
+                        };
+                      })
+                    );
                   }}
                 />
                 <input className="w-full text-left mx-1 py-1"
-                value={option.optionBody}
+                value={option.choice}
                 onChange={(e) => {
                     updateOption(option.optionId, e.target.value);
                     }}

@@ -1,0 +1,105 @@
+// memory.proto
+
+syntax = "proto3";
+import "protos/common.proto";
+package memory;
+
+
+option go_package = "%replace%/internal/proto/memory";
+
+service MemoryService {
+  rpc CreateMemory (CreateMemoryRequest) returns (CreateMemoryResponse);
+  rpc GetMemoryById (GetMemoryByIdRequest) returns (GetMemoryByIdResponse);
+  rpc GetMemoriesByDocId (GetMemoriesByDocIdRequest) returns (GetMemoriesByDocIdResponse);
+  rpc GetMemoriesByMemoryTitleSearch (GetMemoriesByMemoryTitleSearchRequest) returns (GetMemoriesByMemoryTitleSearchResponse);
+  rpc UpdateMemory (UpdateMemoryRequest) returns (UpdateMemoryResponse);
+  rpc DeleteMemory (DeleteMemoryRequest) returns (DeleteMemoryResponse);
+}
+
+
+// MemoryService
+message CreateMemoryRequest {
+  uint64 user_id = 1;
+  uint64 doc_id = 2;
+  string memory_title = 3;
+  string memory_content = 4;
+  uint64 module_id = 5;
+}
+
+message CreateMemoryResponse {
+}
+
+message GetMemoryByIdRequest {
+  uint64 user_id = 1;
+  uint64 doc_id = 2;
+  uint64 memory_id = 3;
+  uint64 module_id = 4;
+}
+
+message GetMemoryByIdResponse {
+  DBMemory memory = 1;
+}
+
+message GetMemoriesByDocIdRequest {
+  uint64 user_id = 1;
+  uint64 doc_id = 2;
+  uint32 page_number = 3;
+  uint32 page_size = 4;
+  common.ORDER_BY_FIELD order_by_field = 5;
+  common.ORDER_BY_DIRECTION order_by_direction = 6;
+  uint64 module_id = 7;
+}
+
+message GetMemoriesByDocIdResponse {
+  repeated DBMemory memories = 1;
+}
+
+message GetMemoriesByMemoryTitleSearchRequest {
+  uint64 user_id = 1;
+  uint64 doc_id = 2;
+  string search_query = 3;
+  uint32 page_number = 4;
+  uint32 page_size = 5;
+  common.ORDER_BY_FIELD order_by_field = 6;
+  common.ORDER_BY_DIRECTION order_by_direction = 7;
+  uint64 module_id = 8;
+}
+
+message GetMemoriesByMemoryTitleSearchResponse {
+  repeated DBMemory memories = 1;
+}
+
+message UpdateMemoryRequest {
+  uint64 user_id = 1;
+  uint64 doc_id = 2;
+  uint64 memory_id = 3;
+  string memory_title = 4;
+  string memory_content = 5;
+  uint64 module_id = 6;
+}
+
+message UpdateMemoryResponse {
+}
+
+message DeleteMemoryRequest {
+  uint64 user_id = 1;
+  uint64 doc_id = 2;
+  uint64 memory_id = 3;
+  uint64 module_id = 4;
+}
+
+message DeleteMemoryResponse {
+}
+
+
+// DB Models
+
+message DBMemory {
+  uint64 memory_id = 1;
+  uint64 user_id = 2;
+  uint64 doc_id = 3;
+  string memory_title = 4;
+  string memory_content = 5;
+  uint64 created_time = 6;
+  uint64 updated_time = 7;
+}

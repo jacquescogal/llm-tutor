@@ -358,6 +358,7 @@ func (repo *ModuleRepository) DeleteModule(ctx context.Context, tx *sql.Tx, modu
 	return nil
 }
 
+
 // UserModuleMap
 
 func (repo *ModuleRepository) GetUserModuleMapping(ctx context.Context, tx *sql.Tx, userID, moduleID uint64) error {

@@ -1,9 +1,9 @@
-import React from "react";
+import React, { ReactNode } from "react";
 
 type Props = {
   dropSymbol: React.ReactNode;
   dropName: string;
-  items?: string[];
+  items?: ReactNode[];
 };
 
 const Dropdown = (props: Props) => {
@@ -13,7 +13,7 @@ const Dropdown = (props: Props) => {
         tabIndex={0}
         role="button"
       >
-        <button disabled className="flex flex-row px-1">
+        <button className="flex flex-row px-1">
           {props.dropName}{props.dropSymbol}
         </button>
       </div>

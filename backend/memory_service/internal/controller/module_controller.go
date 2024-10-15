@@ -3,6 +3,7 @@ package controller
 import (
 	"context"
 	"database/sql"
+	"fmt"
 	"log"
 	"memory_core/internal/proto/common"
 	mpb "memory_core/internal/proto/module"
@@ -154,6 +155,7 @@ func (c *ModuleController) GetModulesBySubjectId(ctx context.Context, req *mpb.G
 		log.Printf("Failed to get modules by subject ID: %v", err)
 		return nil, err
 	}
+	fmt.Println(modules)
 	return &mpb.GetModulesBySubjectIdResponse{Modules: modules}, nil
 }
 

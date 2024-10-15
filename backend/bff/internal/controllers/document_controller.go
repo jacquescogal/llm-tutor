@@ -48,17 +48,13 @@ func (c *DocumentController) CreateDocument(ctx *gin.Context) error {
 	}
 	fmt.Println("uploading document for user", userId)
 	// upload the document to s3
-	// s3ObjectKey, err := c.uploadDocument(ctx)
-	// if err != nil {
-	// 	return err
-	// }
-	s3ObjectKey := "test"
+	s3ObjectKey, err := c.uploadDocument(ctx)
+	if err != nil {
+		return err
+	}
 	fmt.Println("uploaded document to s3", s3ObjectKey)
 	var req document.CreateDocRequest
 	ctx.Bind(&req)
-	req.UserId = userId
-	req.UploadStatus = common.UploadStatus_UPLOAD_STATUS_UPLOADING
-	req.S3ObjectKey = s3ObjectKey
 	// get postform
 	// unmarshal string to req
 	jsonBody := ctx.PostForm("json")
@@ -68,6 +64,9 @@ func (c *DocumentController) CreateDocument(ctx *gin.Context) error {
 		return err
 	}
 	req.ModuleId = moduleId
+	req.UserId = userId
+	req.UploadStatus = common.UploadStatus_UPLOAD_STATUS_QUEUEING
+	req.S3ObjectKey = s3ObjectKey
 
 	return c.docService.CreateDocument(ctx, &req)
 }

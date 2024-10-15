@@ -1,0 +1,36 @@
+// generation.proto
+
+syntax = "proto3";
+package generation;
+import "common.proto";
+
+
+option go_package = "memory_core/internal/proto/generation";
+
+service generationService {
+    rpc CreateGeneration (CreateGenerationRequest) returns (CreateGenerationResponse);
+}
+
+message CreateGenerationRequest {
+    uint64 user_id = 1;
+    uint64 id = 2;
+    common.IDType id_type = 3;
+    repeated ChatHistory chat_history = 4;
+}
+
+message CreateGenerationResponse {
+    string response = 1;
+}
+
+message ChatHistory {
+    EntityType entity_type = 1;
+    string content = 2;
+}
+
+enum EntityType {
+    ENTITY_TYPE_UNSPECIFIED = 0;
+    ENTITY_TYPE_SYSTEM = 1;
+    ENTITY_TYPE_USER = 2;
+    ENTITY_TYPE_BOT = 3;
+  }
+  

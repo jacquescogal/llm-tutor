@@ -61,7 +61,7 @@ func (c *QuestionController) CreateQuestion(ctx context.Context, req *qpb.Create
 	}()
 
 	// Create question
-	err = c.questionRepo.CreateQuestion(ctx, tx, req.GetUserId(), req.GetDocId(), req.GetQuestionTitle(), req.GetQuestionBlob(), common.QuestionType(req.GetQuestionType()))
+	err = c.questionRepo.CreateQuestion(ctx, tx,  req.GetDocId(), req.GetUserId(), req.GetQuestionTitle(), req.GetQuestionBlob(), common.QuestionType(req.GetQuestionType()))
 	if err != nil {
 		log.Printf("Failed to create question: %v", err)
 		tx.Rollback()

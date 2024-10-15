@@ -22,15 +22,17 @@ func NewRedis() (*Redis, error) {
 	fmt.Println(redisHost)
 	client := redis.NewClient(&redis.Options{
 		Addr: fmt.Sprintf("%s:%s", redisHost, redisPort),
+		Password: "",
+		DB: 0,
 	})
 
 	// Test the connection
-	ctx, cancel := context.WithTimeout(context.Background(), 5*time.Second)
+	ctx, cancel := context.WithTimeout(context.Background(), 30*time.Second)
 	defer cancel()
 
 	_, err := client.Ping(ctx).Result()
 	if err != nil {
-		log.Fatalf("failed to connect to Redis: %v", err)
+		log.Fatalf("failed to connect to Redis: %v, %s, %s", err, redisHost, redisPort)
 	}
 
 	return &Redis{Client: client}, nil

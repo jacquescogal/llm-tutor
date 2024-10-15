@@ -246,3 +246,21 @@ func (c *SubjectController) SetUserSubjectFavourite(ctx *gin.Context) error {
 	req.SubjectId = subjectId
 	return c.subjectService.SetUserSubjectFavourite(ctx, &req)
 }
+
+func (c *SubjectController) SetSubjectModuleMapping(ctx *gin.Context) error {
+	userSession,err := getUserSession(ctx)
+	if err != nil {
+		return err
+	}
+	userId := userSession.UserId
+	subjectId, err := getUint64FromString(ctx.Param("subject_id"))
+	if err != nil {
+		return err
+	}
+	var req subject.SetSubjectModuleMappingRequest
+	// ctx bind
+	ctx.Bind(&req)
+	req.UserId = userId
+	req.SubjectId = subjectId
+	return c.subjectService.SetSubjectModuleMapping(ctx, &req)
+}

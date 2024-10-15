@@ -23,8 +23,7 @@ message CreateMemoryRequest {
   uint64 doc_id = 2;
   string memory_title = 3;
   string memory_content = 4;
-  bool is_public = 5;
-  uint64 module_id = 6;
+  uint64 module_id = 5;
 }
 
 message CreateMemoryResponse {
@@ -103,4 +102,5 @@ message DBMemory {
   string memory_content = 5;
   uint64 created_time = 6;
   uint64 updated_time = 7;
+  string vector_uuid = 8;
 }

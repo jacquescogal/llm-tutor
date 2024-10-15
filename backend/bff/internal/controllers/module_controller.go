@@ -4,6 +4,7 @@ import (
 	"bff/internal/proto/common"
 	"bff/internal/proto/module"
 	"bff/internal/services"
+	"fmt"
 	"os"
 
 	"github.com/gin-gonic/gin"
@@ -151,6 +152,7 @@ func (c *ModuleController) GetModulesBySubjectId(ctx *gin.Context) (*module.GetM
 	if err != nil {
 		return nil, err
 	}
+	fmt.Println("subjectId", subjectId)
 	userId := userSession.UserId
 	pageNumber, err := getUint32FromString(ctx.DefaultQuery(QUERY_PAGE_NUMBER, "1"))
 	if err != nil {

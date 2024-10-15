@@ -1,14 +1,11 @@
 import React, { useState } from "react";
+import { QuestionReturn, TextInputQuestion, unserializeQuestion } from "../../../api/questionService";
 
-type Props = {
-  questionId: string;
-  questionBody: string;
-  answer?: string;
-};
 
-const EditOpenAnswerCard = (props: Props) => {
-  const [questionBody, setQuestionBody] = useState(props.questionBody);
-  const [answer, setAnswer] = useState(props.answer);
+const EditOpenAnswerCard = (props:QuestionReturn) => {
+  const actQuestion:TextInputQuestion = unserializeQuestion(props) as TextInputQuestion;
+  const [questionBody, setQuestionBody] = useState(props.question_title);
+  const [answer, setAnswer] = useState(actQuestion.answer);
 
   return (
     <div
@@ -25,7 +22,7 @@ const EditOpenAnswerCard = (props: Props) => {
         text-ellipsis
         "
     >
-      <h1 className="truncate h-fit mb-1">Question {props.questionId}</h1>
+      <h1 className="truncate h-fit mb-1">Question {props.question_id}</h1>
       <textarea
         className="text-wrap break-words h-20 overflow-scroll bg-slate-50 shadow-inner p-1 mb-1          
           "

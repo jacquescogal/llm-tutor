@@ -126,15 +126,15 @@ const Drawer = (props: Props) => {
       child: [
         {
           name: "New",
-          url: "favourite/module",
+          url: "todo",
         },
         {
           name: "In Progress",
-          url: "favourite/module",
+          url: "todo",
         },
         {
           name: "Results",
-          url: "favourite/module",
+          url: "todo",
         },
       ],
     },
@@ -148,15 +148,15 @@ const Drawer = (props: Props) => {
       child: [
         {
           name: "Subject",
-          url: "favourite/module",
+          url: "todo",
         },
         {
           name: "Modules",
-          url: "favourite/module",
+          url: "todo",
         },
         {
           name: "Document",
-          url: "favourite/subject",
+          url: "todo",
         },
       ],
     },

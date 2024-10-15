@@ -17,19 +17,26 @@ func NewDocRepository() *DocRepository {
 }
 
 // CreateDoc inserts a new document into doc_tab
-func (repo *DocRepository) CreateDoc(ctx context.Context, tx *sql.Tx, moduleID uint64, docName, docDescription, docSummary string, uploadStatus common.UploadStatus, s3ObjectKey string) error {
+func (repo *DocRepository) CreateDoc(ctx context.Context, tx *sql.Tx, moduleID uint64, docName, docDescription, docSummary string, uploadStatus common.UploadStatus, s3ObjectKey string) (uint64, error) {
 	query := `
 		INSERT INTO doc_tab (module_id, doc_name, doc_description, doc_summary, upload_status, s3_object_key, created_time, updated_time)
 		VALUES (?, ?, ?, ?, ?, ?, ?, ?)
 	`
 	createdTime := time.Now().Unix()
-	_, err := tx.ExecContext(ctx, query, moduleID, docName, docDescription, docSummary, uploadStatus, s3ObjectKey, createdTime, createdTime)
+	result, err := tx.ExecContext(ctx, query, moduleID, docName, docDescription, docSummary, uploadStatus, s3ObjectKey, createdTime, createdTime)
 	if err != nil {
 		log.Printf("Error creating document: %v\n", err)
-		return err
+		return 0, err
 	}
-	log.Println("Document created successfully")
-	return nil
+	
+	lastInsertID, err := result.LastInsertId()
+	if err != nil {
+		log.Printf("Error getting last insert ID: %v\n", err)
+		return 0, err
+	}
+
+	log.Printf("Document created successfully with ID: %d\n", lastInsertID)
+	return uint64(lastInsertID), nil
 }
 
 // GetDocById retrieves a document by doc_id
@@ -131,6 +138,40 @@ func (repo *DocRepository) UpdateDoc(ctx context.Context, tx *sql.Tx, docID uint
 		return err
 	}
 	log.Println("Document updated successfully")
+	return nil
+}
+
+// UpdateSummary
+func (repo *DocRepository) UpdateSummary(ctx context.Context, tx *sql.Tx, docID uint64, docSummary string) error {
+	query := `
+		UPDATE doc_tab
+		SET doc_summary = ?, updated_time = ?
+		WHERE doc_id = ?
+	`
+	updatedTime := time.Now().Unix()
+	_, err := tx.ExecContext(ctx, query, docSummary, updatedTime, docID)
+	if err != nil {
+		log.Printf("Error updating document summary: %v\n", err)
+		return err
+	}
+	log.Println("Document summary updated successfully")
+	return nil
+}
+
+// UpdateUploadStatus
+func (repo *DocRepository) UpdateUploadStatus(ctx context.Context, tx *sql.Tx, docID uint64, uploadStatus common.UploadStatus) error {
+	query := `
+		UPDATE doc_tab
+		SET upload_status = ?, updated_time = ?
+		WHERE doc_id = ?
+	`
+	updatedTime := time.Now().Unix()
+	_, err := tx.ExecContext(ctx, query, uploadStatus, updatedTime, docID)
+	if err != nil {
+		log.Printf("Error updating document upload status: %v\n", err)
+		return err
+	}
+	log.Println("Document upload status updated successfully")
 	return nil
 }
 

@@ -4,9 +4,9 @@ import tempfile
 import pymupdf4llm
 
 class ObjectStore:
-    def __init__(self, bucket_name):
+    def __init__(self):
         self.config = Configuration.get_instance()
-        self.bucket_name = bucket_name
+        self.bucket_name = self.config.s3_bucket_name
         self.s3 = boto3.client('s3')
 
     def get_text_object(self, object_key):

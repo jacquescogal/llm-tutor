@@ -6,6 +6,7 @@ import (
 	"bff/internal/handlers"
 	"bff/internal/proto/authenticator"
 	"bff/internal/proto/document"
+	"bff/internal/proto/generation"
 	"bff/internal/proto/memory"
 	"bff/internal/proto/module"
 	"bff/internal/proto/question"
@@ -52,6 +53,9 @@ func main() {
 	if err != nil {
 		log.Fatalf("Failed to connect to gRPC server: %v", err)
 	}
+	generationServiceHost := os.Getenv("GEN_SERVICE_HOST")
+	generationServicePort := os.Getenv("GEN_SERVICE_PORT")
+	generationConn, err := grpc.NewClient(fmt.Sprintf("%s:%s",generationServiceHost,generationServicePort), grpc.WithTransportCredentials(insecure.NewCredentials()))
 
     authService := services.NewAuthenticationService(authenticator.NewUserServiceClient(conn))
 	memoryService := services.NewMemoryService(memory.NewMemoryServiceClient(memoryConn))
@@ -59,6 +63,7 @@ func main() {
 	moduleService := services.NewModuleService(module.NewModuleServiceClient(memoryConn))
 	questionService := services.NewQuestionService(question.NewQuestionServiceClient(memoryConn))
 	subjectService := services.NewSubjectService(subject.NewSubjectServiceClient(memoryConn))
+	generationService := services.NewGenerationService(generation.NewGenerationServiceClient(generationConn))
 	s3DB := db.NewS3UploadClient()
 
 	authController := controllers.NewAuthenticationController(authService)
@@ -67,6 +72,7 @@ func main() {
 	moduleController := controllers.NewModuleController(moduleService)
 	questionController := controllers.NewQuestionController(questionService)
 	subjectController := controllers.NewSubjectController(subjectService)
+	generationController := controllers.NewGenerationController(generationService)
 
     authHandler := handlers.NewAuthenticationHandler(authController)
 	memoryHandler := handlers.NewMemoryHandler(memoryController)
@@ -74,11 +80,15 @@ func main() {
 	moduleHandler := handlers.NewModuleHandler(moduleController)
 	questionHandler := handlers.NewQuestionHandler(questionController)
 	subjectHandler := handlers.NewSubjectHandler(subjectController)
+	generationHandler := handlers.NewGenerationHandler(generationController)
 
 	// Auth Routes
     r.POST("/user", authHandler.CreateUser)
     r.POST("/session", authHandler.CreateSession)
     r.DELETE("/session", handlers.SessionMiddleware(authService), authHandler.DeleteSession)
+
+	// Generation Routes
+	r.POST("/generate", handlers.SessionMiddleware(authService), generationHandler.CreateGeneration)
 
 	// Subject Routes
 	r.POST("/subject", handlers.SessionMiddleware(authService), subjectHandler.CreateSubject)
@@ -89,6 +99,7 @@ func main() {
 	r.GET("/user/subject", handlers.SessionMiddleware(authService), subjectHandler.GetSubjectsByUserID)
 	r.POST("/search/subject", handlers.SessionMiddleware(authService), subjectHandler.GetSubjectsByNameSearch)
 	r.POST("/favourite/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.SetUserSubjectFavourite)
+	r.PUT("/subject/:subject_id/module", handlers.SessionMiddleware(authService), subjectHandler.SetSubjectModuleMapping)
 	r.PUT("/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.UpdateSubject)
 	r.DELETE("/subject/:subject_id", handlers.SessionMiddleware(authService), subjectHandler.DeleteSubject)
 

@@ -1,5 +1,7 @@
 import React, { useEffect } from "react";
 import { setUserModuleFavourite } from "../../api/moduleService";
+import { UserModuleRole } from "../../types/enums";
+import { userModuleRoleToSpan } from "../../utilities/roleUtilities";
 
 type Props = {
   title: string;
@@ -10,6 +12,7 @@ type Props = {
   updatedAt: string;
   actionItems?: React.ReactNode[];
   isFavourite: boolean;
+  userRole: UserModuleRole;
 };
 
 const ModuleHero = (props: Props) => {
@@ -65,6 +68,10 @@ const ModuleHero = (props: Props) => {
           <div className="flex flex-col justify-between  w-full">
             <span>Last Update: </span>
             <span>{props.updatedAt}</span>
+          </div>
+          <div className="flex flex-col justify-between  w-full">
+            <span>Your Role: </span>
+            <span>{userModuleRoleToSpan(props.userRole)}</span>
           </div>
         </div>
         {

@@ -1,6 +1,56 @@
 version: '3.8'
 
 services:
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - backend
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: kafka
+    ports:
+      - "9092:9092"  # External port (exposed to the host)
+      - "9093:9093"  # Internal port (for Docker network)
+    environment:
+      KAFKA_BROKER_ID: 1 
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: LISTENER_DOCKER_INTERNAL://kafka:9093,LISTENER_DOCKER_EXTERNAL://localhost:9092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: LISTENER_DOCKER_INTERNAL:PLAINTEXT,LISTENER_DOCKER_EXTERNAL:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: LISTENER_DOCKER_INTERNAL
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_CONFLUENT_SUPPORT_METRICS_ENABLE: "false"
+      KAFKA_CREATE_TOPICS: "create_document:1:1" # this is the topic for document creation
+    depends_on:
+      - zookeeper
+    networks:
+      - backend
+
+  init-kafka:
+    image: confluentinc/cp-kafka:latest
+    depends_on:
+      - kafka
+    entrypoint: [ '/bin/sh', '-c' ]
+    command: |
+      "
+      # blocks until kafka is reachable
+      kafka-topics --bootstrap-server kafka:9093 --list
+
+      echo -e 'Creating kafka topics'
+      kafka-topics --bootstrap-server kafka:9093 --create --if-not-exists --topic create_document --replication-factor 1 --partitions 1
+
+      echo -e 'Successfully created the following topics:'
+      kafka-topics --bootstrap-server kafka:9093 --list
+      "
+    networks:
+      - backend
+
   mysql-auth:
     image: mysql:8.0
     container_name: mysql-auth
@@ -34,6 +84,12 @@ services:
       - ./database/memory_scripts:/docker-entrypoint-initdb.d
     networks:
       - backend
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
 
   redis-auth:
     image: redis:7.0
@@ -42,6 +98,13 @@ services:
       - "6379:6379"
     networks:
       - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
   redis-memory:
     image: redis:7.0
     container_name: redis-memory
@@ -49,14 +112,32 @@ services:
       - "6380:6379"
     networks:
       - backend
+    healthcheck:
+      test: ["CMD", "redis-cli", "-p", "6379", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+
 
   weaviate:
-    image: semitechnologies/weaviate:latest
+    command:
+    - --host
+    - 0.0.0.0
+    - --port
+    - '8080'
+    - --scheme
+    - http
+    image: cr.weaviate.io/semitechnologies/weaviate:1.26.5
     container_name: weaviate
     environment:
       QUERY_DEFAULTS_LIMIT: '20'
       AUTHENTICATION_ANONYMOUS_ACCESS_ENABLED: 'true'
       PERSISTENCE_DATA_PATH: '/var/lib/weaviate'
+      OPENAI_APIKEY: <openai-key>
+      DEFAULT_VECTORIZER_MODULE: 'text2vec-openai'
+      ENABLE_MODULES: 'text2vec-openai'
+      CLUSTER_HOSTNAME: 'node1'
     ports:
       - "9000:8080"
       - "9001:50051"
@@ -65,25 +146,36 @@ services:
     networks:
       - backend
 
-  # go-bff:
-  #   build:
-  #     context: ./backend/bff
-  #   container_name: go-bff
-  #   environment:
-  #     CORS_ALLOWED_ORIGINS: "http://localhost:5173"
-  #     BFF_SERVICE_HOST: "localhost"
-  #     BFF_SERVICE_PORT: "8000"
-  #     AUTH_SERVICE_HOST: "go-auth"
-  #     AUTH_SERVICE_PORT: "50051"
-  #   ports:
-  #     - "8000:8000"  # Expose port 50051
-  #   networks:
-  #     - backend
-  #   depends_on:
-  #     - mysql-auth
-  #     - mysql-memory
-  #     - redis-auth
-  #     - redis-memory
+  go-bff:
+    build:
+      context: ./backend/bff
+    container_name: go-bff
+    environment:
+      CORS_ALLOWED_ORIGINS: "http://localhost:5173"
+      BFF_SERVICE_HOST: "localhost"
+      BFF_SERVICE_PORT: "8000"
+      AUTH_SERVICE_HOST: "go-auth"
+      AUTH_SERVICE_PORT: "50051"
+      MEMORY_SERVICE_HOST: "go-memory"
+      MEMORY_SERVICE_PORT: "50052"
+      GEN_SERVICE_HOST: "python-generation-service"
+      GEN_SERVICE_PORT: "50060"
+      AWS_ACCESS_KEY_ID: "<aws-access-key>"
+      AWS_SECRET_ACCESS_KEY: "<aws-secret-access-key>"
+      AWS_REGION: "ap-southeast-1"
+      S3_BUCKET_NAME: "tutor-ai-project"
+      SUBJECT_PAGE_SIZE: "10"
+      MODULE_PAGE_SIZE: "10"
+    ports:
+      - "8000:8000"  # Expose port 8000
+    networks:
+      - backend
+    depends_on:
+      - mysql-auth
+      - mysql-memory
+      - redis-auth
+      - redis-memory
+
   go-auth:
     build:
       context: ./backend/authentication_service
@@ -107,7 +199,68 @@ services:
       mysql-auth:
         condition: service_healthy
       redis-auth:
-        condition: service_started
+        condition: service_healthy
+
+  go-memory:
+    build:
+      context: ./backend/memory_service
+    container_name: go-memory
+    environment:
+      DB_USERNAME: "root"
+      DB_PASSWORD: "password"
+      DB_HOST: "mysql-memory"
+      DB_PORT: "3306"
+      DB_NAME: "memory_db"
+      DB_MAX_OPEN_CONNS: "10"
+      DB_MAX_IDLE_CONNS: "10"
+      DB_MAX_CONN_LIFETIME_MIN: "30m"
+      REDIS_HOST: "redis-memory"
+      REDIS_PORT: "6379"
+      KAFKA_SERVER: "kafka:9093"
+      KAFKA_TOPIC: "create_document"
+    ports:
+      - "50052:50052"  # Expose port 50052
+    networks:
+      - backend
+    depends_on:
+      mysql-memory:
+        condition: service_healthy
+      redis-memory:
+        condition: service_healthy
+  
+  python-memory-consumer:
+    build:
+      context: ./backend/memory_creation_consumer
+    container_name: python-memory-consumer
+    environment:
+      S3_BUCKET_NAME: tutor-ai-project
+      AWS_ACCES_KEY: <aws-access-key>
+      AWS_SECRET_ACCESS_KEY: <aws-secret-access-key>
+      LLAMA_PARSER_KEY: <llama-parser-key>
+      EPOCH_DATE_YYYYMMDD: 20200101
+      OPENAI_API_MODEL: gpt-4o-mini
+      MEMORY_SERVICE_ADDRESS: go-memory:50052
+      KAFKA_ADDRESS: kafka:9093
+      KAFKA_TOPIC: "create_document"
+      OPENAI_API_KEY: <openai-key>
+    depends_on:
+      init-kafka:
+        condition: service_completed_successfully
+    networks:
+      - backend
+
+  python-generation-service:
+    build:
+      context: ./backend/generation_service
+    container_name: python-generation-service
+    environment:
+      OPENAI_API_MODEL: gpt-4o-mini
+      MEMORY_SERVICE_ADDRESS: go-memory:50052
+      OPENAI_API_KEY: <openai-key>
+    ports:
+      - "50060:50060" 
+    networks:
+      - backend
 
 
 volumes:

@@ -5,8 +5,10 @@ import (
 	"database/sql"
 	"fmt"
 	"log"
+	"memory_core/internal/producer"
 	"memory_core/internal/proto/common"
 	dpb "memory_core/internal/proto/document"
+	"memory_core/internal/proto/document_job"
 	modpb "memory_core/internal/proto/module"
 
 	"memory_core/internal/repository"
@@ -21,10 +23,12 @@ type DocController struct {
 	docRepo *repository.DocRepository
 	moduleRepo *repository.ModuleRepository
 	userModuleMapRepo *repository.UserModuleMapRepository
+	kafkaProducer *producer.KafkaProducer
+	vectorRepo *repository.VectorRepository
 }
 
-func NewDocController(db *sql.DB, docRepo *repository.DocRepository, moduleRepo *repository.ModuleRepository, userModuleMapRepo *repository.UserModuleMapRepository) *DocController{
-	return &DocController{db: db, docRepo: docRepo, moduleRepo: moduleRepo, userModuleMapRepo: userModuleMapRepo}
+func NewDocController(db *sql.DB, docRepo *repository.DocRepository, moduleRepo *repository.ModuleRepository, userModuleMapRepo *repository.UserModuleMapRepository, kafkaProducer *producer.KafkaProducer) *DocController {
+	return &DocController{db: db, docRepo: docRepo, moduleRepo: moduleRepo, userModuleMapRepo: userModuleMapRepo, kafkaProducer: kafkaProducer}
 }
 
 // CreateDoc handles the business logic for creating a new document
@@ -64,7 +68,7 @@ func (c *DocController) CreateDoc(ctx context.Context, req *dpb.CreateDocRequest
 	req.DocName = validatedDocName
 
 	// Create the document
-	err = c.docRepo.CreateDoc(ctx, tx,  req.GetModuleId(), validatedDocName, req.GetDocDescription(), req.GetDocSummary(), req.GetUploadStatus(), req.GetS3ObjectKey())
+	docId, err := c.docRepo.CreateDoc(ctx, tx,  req.GetModuleId(), validatedDocName, req.GetDocDescription(), req.GetDocSummary(), req.GetUploadStatus(), req.GetS3ObjectKey())
 	if err != nil {
 		log.Printf("Failed to create document: %v", err)
 		tx.Rollback()
@@ -73,6 +77,16 @@ func (c *DocController) CreateDoc(ctx context.Context, req *dpb.CreateDocRequest
 
 	if err := tx.Commit(); err != nil {
 		log.Printf("Failed to commit transaction: %v", err)
+		return nil, err
+	}
+	documentProcessingJob := &document_job.DocumentProcessingJob{
+		DocId: docId,
+		ModuleId: req.GetModuleId(),
+		UserId: req.GetUserId(),
+	}
+
+	if err = c.kafkaProducer.ProduceMessage(ctx, documentProcessingJob); err != nil {
+		log.Printf("Failed to produce message: %v", err)
 		return nil, err
 	}
 
@@ -204,6 +218,108 @@ func (c *DocController) UpdateDoc(ctx context.Context, req *dpb.UpdateDocRequest
 
 	log.Println("Document updated successfully")
 	return &dpb.UpdateDocResponse{}, nil
+}
+
+// UpdateSummary 
+func (c *DocController) UpdateSummary(ctx context.Context, req *dpb.UpdateSummaryRequest) (*dpb.UpdateSummaryResponse, error) {
+	log.Println("UpdateSummary")
+	if req.GetUserId() == 0 {
+		log.Println("User ID is required")
+		return nil, status.Error(codes.InvalidArgument, "User ID is required")
+	}
+	if req.GetDocId() == 0 {
+		log.Println("Document ID is required")
+		return nil, status.Error(codes.InvalidArgument, "Document ID is required")
+	}
+
+	// check edit privileges
+	err := c.getEditPrivileges(ctx, req.GetUserId(), req.GetModuleId())
+	if err != nil {
+		log.Printf("Failed to get edit privileges: %v", err)
+		return nil, err
+	}
+
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to begin transaction: %v", err)
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Printf("Recovered from panic: %v", r)
+		}
+	}()
+
+	err = c.docRepo.UpdateSummary(ctx, tx, req.GetDocId(), req.GetDocSummary())
+	if err != nil {
+		log.Printf("Failed to update document summary: %v", err)
+		tx.Rollback()
+		return nil, err
+	}
+	if req.GetUploadStatus() != common.UploadStatus_UPLOAD_STATUS_NOT_STARTED {
+		err = c.docRepo.UpdateUploadStatus(ctx, tx, req.GetDocId(), req.GetUploadStatus())
+		if err != nil {
+			log.Printf("Failed to update upload status: %v", err)
+			tx.Rollback()
+			return nil, err
+		}
+	}
+	
+	if err := tx.Commit(); err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
+		return nil, err
+	}
+
+	log.Println("Document summary updated successfully")
+	return &dpb.UpdateSummaryResponse{}, nil
+}
+
+// UpdateUploadStatus
+func (c *DocController) UpdateUploadStatus(ctx context.Context, req *dpb.UpdateUploadStatusRequest) (*dpb.UpdateUploadStatusResponse, error) {
+	if req.GetUserId() == 0 {
+		log.Println("User ID is required")
+		return nil, status.Error(codes.InvalidArgument, "User ID is required")
+	}
+	if req.GetDocId() == 0 {
+		log.Println("Document ID is required")
+		return nil, status.Error(codes.InvalidArgument, "Document ID is required")
+	}
+
+	// check edit privileges
+	err := c.getEditPrivileges(ctx, req.GetUserId(), req.GetModuleId())
+	if err != nil {
+		return nil, err
+	}
+
+	tx, err := c.db.BeginTx(ctx, nil)
+	if err != nil {
+		log.Printf("Failed to begin transaction: %v", err)
+		return nil, err
+	}
+
+	defer func() {
+		if r := recover(); r != nil {
+			tx.Rollback()
+			log.Printf("Recovered from panic: %v", r)
+		}
+	}()
+
+	err = c.docRepo.UpdateUploadStatus(ctx, tx, req.GetDocId(), req.GetUploadStatus())
+	if err != nil {
+		log.Printf("Failed to update upload status: %v", err)
+		tx.Rollback()
+		return nil, err
+	}
+
+	if err := tx.Commit(); err != nil {
+		log.Printf("Failed to commit transaction: %v", err)
+		return nil, err
+	}
+
+	log.Println("Document upload status updated successfully")
+	return &dpb.UpdateUploadStatusResponse{}, nil
 }
 
 // DeleteDoc handles the business logic for deleting a document

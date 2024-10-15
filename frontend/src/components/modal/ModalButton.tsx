@@ -1,4 +1,6 @@
 import React, { useRef } from "react";
+import { useSelector } from "react-redux";
+import { RootState } from "../../store/store";
 
 type Props = {
   buttonName: string;
@@ -15,13 +17,14 @@ const ModalButton = (props: Props) => {
     }
   };
 
+  const loadingCount = useSelector((state: RootState) => state.isLoading.loadingCount);
 
   return (
     <>
       <button className={props.className} onClick={openModal}>
         {props.buttonName}
       </button>
-      <dialog id="my_modal_1" className="modal" ref={modalRef}>
+      <dialog id="my_modal_1" className="modal  z-[5000]" ref={modalRef}>
         <div className="modal-box">
           <div className="modal-action">
             <form className="w-full" method="dialog">
@@ -33,6 +36,7 @@ const ModalButton = (props: Props) => {
             </form>
           </div>
         </div>
+        {loadingCount>0 && <div className="bg-gray-100 w-full h-full fixed top-0 left-0 z-[9999] opacity-50"/>}
       </dialog>
     </>
   );

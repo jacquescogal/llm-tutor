@@ -21,6 +21,10 @@ import {
 import { OrderByDirection, OrderByField } from "../../types/enums";
 import { unixToDateString } from "../../utilities/timeUtilities";
 import { sortByMap } from "../../utilities/constants";
+import ModalSpan from "../../components/modal/ModalSpan";
+import CreateDocumentCard from "../../components/form/create/CreateDocumentCard";
+import ChatCard from "../../components/form/ChatCard";
+import { ID_TYPE } from "../../types/chat";
 
 const ModulePage = () => {
   const [moduleHeroDetails, setModuleHeroDetails] =
@@ -96,6 +100,7 @@ const ModulePage = () => {
             createdAt={unixToDateString(moduleHeroDetails.module.created_time)}
             updatedAt={unixToDateString(moduleHeroDetails.module.updated_time)}
             isFavourite={moduleHeroDetails.is_favourite}
+            userRole={moduleHeroDetails.user_module_role}
           />
         )}
       </div>
@@ -107,8 +112,8 @@ const ModulePage = () => {
         add remove action to the modules
         add create module action below the modules
         */}
-        <span className="w-96 text-start font-bold">Modules:</span>
-        <Select name="Order By" items={Object.keys(sortBy)} setSelected={s=>{setSortBy(sortByMap[s])}} />
+        <span className="w-96 text-start font-bold">Documents:</span>
+        <Select name="Order By" items={Object.keys(sortByMap)} setSelected={s=>{setSortBy(sortByMap[s])}} />
         <ToggleCheck
           isChecked={isAsc}
           checkName="Asc"
@@ -130,6 +135,7 @@ const ModulePage = () => {
             // createdBy={doc.created_time
             createdAt={unixToDateString(doc.created_time)}
             updatedAt={unixToDateString(doc.updated_time)}
+            status={doc.upload_status}
             // memoryCount={0}
             // questionCount={0}
           />
@@ -139,7 +145,17 @@ const ModulePage = () => {
         <Dropdown
           dropSymbol={<IoMdMenu />}
           dropName="Actions"
-          items={["Test Subject", "Speak to AI Mentor"]}
+          items={[
+            "Test Subject (WIP)", 
+            <ModalSpan buttonName="Speak to AI Mentor" className="w-40 py-2 align-text-left text-left">
+            <ChatCard 
+            id={Number(moduleId)}
+            id_type={ID_TYPE.MODULE}
+            />
+          </ModalSpan>,
+          <ModalSpan buttonName="Upload Document" className="w-40 py-2 align-text-left text-left">
+            <CreateDocumentCard module_id={Number(moduleId)}/>
+          </ModalSpan>]}
         />
       </div>
     </div>

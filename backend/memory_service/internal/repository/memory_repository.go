@@ -1,4 +1,5 @@
 package repository
+
 // DONE
 import (
 	"context"
@@ -17,13 +18,13 @@ func NewMemoryRepository() *MemoryRepository {
 }
 
 // CreateMemory inserts a new memory into memory_tab
-func (repo *MemoryRepository) CreateMemory(ctx context.Context, tx *sql.Tx, docID, userID uint64, memoryTitle, memoryContent string) error {
+func (repo *MemoryRepository) CreateMemory(ctx context.Context, tx *sql.Tx, docID, userID uint64, memoryTitle, memoryContent, VectorUuid string) error {
 	query := `
-		INSERT INTO memory_tab (doc_id, user_id, memory_title, memory_content, created_time, updated_time)
-		VALUES (?, ?, ?, ?, ?, ?)
+		INSERT INTO memory_tab (doc_id, user_id, memory_title, memory_content, created_time, updated_time, vector_uuid)
+		VALUES (?, ?, ?, ?, ?, ?, ?)
 	`
 	createdTime := time.Now().Unix()
-	_, err := tx.ExecContext(ctx, query, docID, userID, memoryTitle, memoryContent, createdTime, createdTime)
+	_, err := tx.ExecContext(ctx, query, docID, userID, memoryTitle, memoryContent, createdTime, createdTime, VectorUuid)
 	if err != nil {
 		log.Printf("Error creating memory: %v\n", err)
 		return err
@@ -35,14 +36,14 @@ func (repo *MemoryRepository) CreateMemory(ctx context.Context, tx *sql.Tx, docI
 // GetMemoryById retrieves a memory by memory_id
 func (repo *MemoryRepository) GetMemoryById(ctx context.Context, db *sql.DB, memoryID uint64) (*mpb.DBMemory, error) {
 	query := `
-		SELECT memory_id, doc_id, user_id, memory_title, memory_content, created_time, updated_time
+		SELECT memory_id, doc_id, user_id, memory_title, memory_content, created_time, updated_time, vector_uuid
 		FROM memory_tab 
 		WHERE memory_id = ?
 	`
 
 	row := db.QueryRowContext(ctx, query, memoryID)
 	var dbMemory mpb.DBMemory
-	err := row.Scan(&dbMemory.MemoryId, &dbMemory.DocId, &dbMemory.UserId, &dbMemory.MemoryTitle, &dbMemory.MemoryContent, &dbMemory.CreatedTime, &dbMemory.UpdatedTime)
+	err := row.Scan(&dbMemory.MemoryId, &dbMemory.DocId, &dbMemory.UserId, &dbMemory.MemoryTitle, &dbMemory.MemoryContent, &dbMemory.CreatedTime, &dbMemory.UpdatedTime, &dbMemory.VectorUuid)
 	if err != nil {
 		log.Printf("Error retrieving memory: %v\n", err)
 		return nil, err
@@ -56,7 +57,7 @@ func (repo *MemoryRepository) GetMemoriesByDocId(ctx context.Context, db *sql.DB
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateMemoryOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT memory_id, doc_id, user_id, memory_title, memory_content, created_time, updated_time
+		SELECT memory_id, doc_id, user_id, memory_title, memory_content, created_time, updated_time, vector_uuid
 		FROM memory_tab
 		WHERE doc_id = ?
 		ORDER BY %s
@@ -73,7 +74,7 @@ func (repo *MemoryRepository) GetMemoriesByDocId(ctx context.Context, db *sql.DB
 	var memories []*mpb.DBMemory
 	for rows.Next() {
 		var dbMemory mpb.DBMemory
-		if err := rows.Scan(&dbMemory.MemoryId, &dbMemory.DocId, &dbMemory.UserId, &dbMemory.MemoryTitle, &dbMemory.MemoryContent, &dbMemory.CreatedTime, &dbMemory.UpdatedTime); err != nil {
+		if err := rows.Scan(&dbMemory.MemoryId, &dbMemory.DocId, &dbMemory.UserId, &dbMemory.MemoryTitle, &dbMemory.MemoryContent, &dbMemory.CreatedTime, &dbMemory.UpdatedTime, &dbMemory.VectorUuid); err != nil {
 			log.Printf("Error scanning memory row: %v\n", err)
 			return nil, err
 		}
@@ -89,7 +90,7 @@ func (repo *MemoryRepository) GetMemoriesByMemoryTitleSearch(ctx context.Context
 	offset := pageOffset(pageNumber, pageSize)
 	sanitisedOrderByString := repo.generateMemoryOrderByString(orderByField, orderByDirection)
 	query := fmt.Sprintf(`
-		SELECT memory_id, doc_id, user_id, memory_title, memory_content, created_time, updated_time
+		SELECT memory_id, doc_id, user_id, memory_title, memory_content, created_time, updated_time, vector_uuid
 		FROM memory_tab
 		WHERE doc_id = ? AND memory_title LIKE ?
 		ORDER BY %s
@@ -106,7 +107,7 @@ func (repo *MemoryRepository) GetMemoriesByMemoryTitleSearch(ctx context.Context
 	var memories []*mpb.DBMemory
 	for rows.Next() {
 		var dbMemory mpb.DBMemory
-		if err := rows.Scan(&dbMemory.MemoryId, &dbMemory.DocId, &dbMemory.UserId, &dbMemory.MemoryTitle, &dbMemory.MemoryContent, &dbMemory.CreatedTime, &dbMemory.UpdatedTime); err != nil {
+		if err := rows.Scan(&dbMemory.MemoryId, &dbMemory.DocId, &dbMemory.UserId, &dbMemory.MemoryTitle, &dbMemory.MemoryContent, &dbMemory.CreatedTime, &dbMemory.UpdatedTime, &dbMemory.VectorUuid); err != nil {
 			log.Printf("Error scanning memory row: %v\n", err)
 			return nil, err
 		}

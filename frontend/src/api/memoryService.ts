@@ -46,7 +46,6 @@ export const getMemoryById = async (
 };
 
 export interface GetMemoriesByDocIdPayload {
-  user_id: number;
   page_number: number;
   
   sort_by: OrderByField;

@@ -9,6 +9,7 @@ type Props = {
   createdAt: string;
   updatedAt: string;
   isFavourite: boolean;
+  className?: string;
 };
 
 const ModuleCard = (props: Props) => {
@@ -28,7 +29,12 @@ const ModuleCard = (props: Props) => {
   }
   return (
     <div
-      className="
+      className=
+      {
+        props.className
+        + " "
+        +
+        `
       h-fit w-96
       max-w-full
       flex flex-col 
@@ -42,7 +48,11 @@ const ModuleCard = (props: Props) => {
       overflow-hidden
       text-ellipsis
       animate-appear-bot
-      "
+      `
+      }
+      
+      
+
     >
       <div className="flex flex-row justify-between align-middle content-center text-center align-center  ">
         

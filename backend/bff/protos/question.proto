@@ -28,7 +28,7 @@ message CreateQuestionRequest {
   
   message CreateQuestionResponse {
   }
-  
+
   message GetQuestionByIdRequest {
     uint64 user_id = 1;
     uint64 doc_id = 2;
@@ -119,4 +119,15 @@ message DBQuestion {
   
   message TextInputQuestion {
     string answer = 1;
+  }
+
+  message QuestionReturn {
+    uint64 question_id = 1;
+    uint64 user_id = 2;
+    uint64 doc_id = 3;
+    string question_title = 4;
+    string question_serialized = 5;
+    common.QuestionType question_type = 6;
+    uint64 created_time = 7;
+    uint64 updated_time = 8;
   }

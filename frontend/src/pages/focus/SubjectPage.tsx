@@ -13,10 +13,15 @@ import { unixToDateString } from '../../utilities/timeUtilities';
 import { sortByMap } from "../../utilities/constants";
 import { OrderByDirection, OrderByField } from "../../types/enums";
 import ModuleCard from "../../components/cards/ModuleCard";
+import ModalSpan from "../../components/modal/ModalSpan";
+import ManageModulesCard from "../../components/form/edit/ManageModulesCard";
+import ChatCard from "../../components/form/ChatCard";
+import { ID_TYPE } from "../../types/chat";
 
 const SubjectPage = () => {
   const [subjectHeroDetails, setSubjectHeroDetails] = React.useState<FullSubject | null>(null);
   const [modules, setModules] = React.useState<FullModule[]>([]);
+  const modulesRef = React.useRef<FullModule[]>([]);
   const [isAsc, setIsAsc] = React.useState(false);
   const [sortBy, setSortBy] = React.useState<OrderByField>(OrderByField.ORDER_BY_FIELD_ID);
   const location = useLocation();
@@ -49,6 +54,7 @@ const SubjectPage = () => {
       console.log(subjectId)
       const response: GetModulesResponse = await getModulesBySubjectId({subject_id: Number(subjectId), page_number:1 , sort_by: sortBy, order: isAsc ? OrderByDirection.ORDER_BY_DIRECTION_ASC : OrderByDirection.ORDER_BY_DIRECTION_DESC});
       setModules(response.modules);
+      modulesRef.current = response.modules;
     }catch (e) {
       if (e instanceof Error) {
         console.log(e);
@@ -76,6 +82,7 @@ const SubjectPage = () => {
       />
 
 </div>
+
       <div className="top-20 flex flex-row w-96 justify-end items-center my-1">
 
         {/* TODO: Add actions like
@@ -85,6 +92,7 @@ const SubjectPage = () => {
         add remove action to the modules
         add create module action below the modules
         */}
+        
       <span className="w-96 text-start font-bold">Modules:</span>
         <Select name="Order By" items={Object.keys(sortByMap)} setSelected={(s)=>{setSortBy(sortByMap[s])}}/>
         <ToggleCheck
@@ -109,12 +117,23 @@ const SubjectPage = () => {
           />
         ))}
       </div>
-      <div className="sticky bottom-0 w-full bg-base-100">
+      <div className=" w-full bg-base-100">
+        
       <Dropdown
-      dropSymbol={<IoMdMenu />}
-      dropName="Actions"
-      items={["Test Subject", "Speak to AI Mentor"]}
-      />
+          dropSymbol={<IoMdMenu />}
+          dropName="Actions"
+          items={[
+            "Test Subject (WIP)", 
+            <ModalSpan buttonName="Speak to AI Mentor" className="w-40 py-2 align-text-left text-left">
+            <ChatCard 
+            id={Number(subjectId)}
+            id_type={ID_TYPE.SUBJECT}
+            />
+          </ModalSpan>,
+          <ModalSpan buttonName="Manage Modules" className="w-40 py-2 align-text-left text-left">
+            <ManageModulesCard subjectId={Number(subjectId)} retriggerFunc={fetchModules}/>
+          </ModalSpan>]}
+        />
       </div>
     </div>
   );

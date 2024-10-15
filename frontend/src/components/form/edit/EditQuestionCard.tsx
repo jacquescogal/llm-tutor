@@ -1,32 +1,20 @@
-import React from 'react'
-import { QuestionOption, QuestionType } from '../../../types/question'
-import EditSingleAnswerForm from './EditSingleAnswerForm';
-import EditMultiAnswerCard from './EditMultiAnswerCard';
-import EditOpenAnswerCard from './EditOpenAnswerCard';
+import { QuestionReturn } from "../../../api/questionService"
+import { QuestionType } from "../../../types/enums"
+import EditMuliAnswerCard from "./EditMultiAnswerCard"
+import EditOpenAnswerCard from "./EditOpenAnswerCard"
+import EditSingleAnswerForm from "./EditSingleAnswerForm"
 
-  
-
-export type EditQuestionProps = {
-    questionType: QuestionType;
-    questionId: string;
-    questionBody: string;
-    optionList?: QuestionOption[];
-    answerOptions?: number[];
-    answerOption?: number;
-    answer?: string;
-}
-
-const EditQuestionCard = (props: EditQuestionProps) => {
+const EditQuestionCard = (props: QuestionReturn) => {
   return (
     <>
     {
-        props.questionType === QuestionType.singleAnswer && EditSingleAnswerForm(props)
+        props.question_type === QuestionType.QUESTION_TYPE_MCQ && EditSingleAnswerForm(props)
     }
     {
-        props.questionType === QuestionType.multiAnswer && EditMultiAnswerCard(props)
+        props.question_type === QuestionType.QUESTION_TYPE_MULTI_ANSWER_MCQ && EditMuliAnswerCard(props)
     }
     {
-        props.questionType === QuestionType.openEnded && EditOpenAnswerCard(props)
+        props.question_type === QuestionType.QUESTION_TYPE_OPEN_ENDED && EditOpenAnswerCard(props)
     }
     </>
   )

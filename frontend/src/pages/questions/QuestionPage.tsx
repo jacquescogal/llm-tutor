@@ -1,8 +1,8 @@
 import React from "react";
-import SingleAnswerCard from "../../components/cards/questions/SingleAnswerCard";
-import MultiAnswerCard from "../../components/cards/questions/MultiAnswerCard";
+import SingleAnswerCard from '../../components/cards/questions/SingleAnswerCard';
+import MultiAnswerCard from '../../components/cards/questions/MultiAnswerCard';
 import OpenAnswerCard from "../../components/cards/questions/OpenAnswerCard";
-import { QuestionType } from "../../types/question";
+import { QuestionType } from "../../types/enums";
 
 
 interface SingleAnswerQuestion {
@@ -61,15 +61,15 @@ const QuestionPage = () => {
     ]);
   const questionList = React.useRef<QuestionPointer[]>([
     {
-        type: QuestionType.singleAnswer,
+        type: QuestionType.QUESTION_TYPE_MCQ,
         subListIndex: 0
     },
     {
-        type: QuestionType.multiAnswer,
+        type: QuestionType.QUESTION_TYPE_MULTI_ANSWER_MCQ,
         subListIndex: 0
     },
     {
-        type: QuestionType.openEnded,
+        type: QuestionType.QUESTION_TYPE_OPEN_ENDED,
         subListIndex: 0
     }
   ]);
@@ -79,7 +79,7 @@ const QuestionPage = () => {
         return (
             <div key={index}>
             {
-                question.type === QuestionType.singleAnswer &&
+                question.type === QuestionType.QUESTION_TYPE_MCQ &&
                 <SingleAnswerCard
                 key={index}
                 questionId={index}
@@ -92,7 +92,7 @@ const QuestionPage = () => {
               />
             }
             {
-                question.type === QuestionType.multiAnswer &&
+                question.type === QuestionType.QUESTION_TYPE_MULTI_ANSWER_MCQ &&
                 <MultiAnswerCard
                 key={index}
                 questionId={index}
@@ -105,7 +105,7 @@ const QuestionPage = () => {
               />
             }
             {
-                question.type === QuestionType.openEnded &&
+                question.type === QuestionType.QUESTION_TYPE_OPEN_ENDED &&
                 <OpenAnswerCard
                 key={index}
                 questionId={index}

@@ -151,6 +151,23 @@ export const updateSubject = async (
   return response.data;
 };
 
+
+export interface setSubjectModuleMappingRequest {
+  subject_id: number;
+  module_ids: number[];
+}
+
+export interface setSubjectModuleMappingResponse {
+  message: string;
+}
+
+export const setSubjectModuleMapping = async (
+  payload: setSubjectModuleMappingRequest
+): Promise<setSubjectModuleMappingResponse> => {
+  const response = await apiClient.put(`/subject/${payload.subject_id}/module`, payload);
+  return response.data;
+};
+
 export interface deleteSubjectPayload {
   user_id: number;
   subject_id: number;
@@ -159,6 +176,8 @@ export interface deleteSubjectPayload {
 export interface deleteSubjectResponse {
   message: string;
 }
+
+
 
 export const deleteSubject = async (
   payload: deleteSubjectPayload

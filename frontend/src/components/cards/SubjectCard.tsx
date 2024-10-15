@@ -74,7 +74,7 @@ const SubjectCard = (props: Props) => {
           // TODO: send this to proper page
           onClick={() => nav(props.subjectId)}
         >
-          Next
+          Open
         </button>
         <Heart
           isFavourite={isFavourite}

@@ -22,6 +22,7 @@ service SubjectService {
 
     rpc SetUserSubjectFavourite (SetUserSubjectFavouriteRequest) returns (SetUserSubjectFavouriteResponse);
     rpc SetUserSubjectRole (SetUserSubjectRoleRequest) returns (SetUserSubjectRoleResponse);
+    rpc SetSubjectModuleMapping (SetSubjectModuleMappingRequest) returns (SetSubjectModuleMappingResponse);
   }
   
 
@@ -145,6 +146,17 @@ message CreateSubjectRequest {
 
   message SetUserSubjectRoleResponse {
   }
+
+    // should be repeated module_id
+    message SetSubjectModuleMappingRequest{
+      uint64 user_id = 1;
+      uint64 subject_id = 2;
+      repeated uint64 module_ids = 3;
+    }
+  
+    message SetSubjectModuleMappingResponse{
+    }
+  
 
   // Consolidated Models
   message FullSubject {

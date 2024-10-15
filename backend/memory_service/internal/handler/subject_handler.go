@@ -66,3 +66,7 @@ func (subjectHandler *SubjectHandler) DeleteSubject(ctx context.Context, deleteS
 func (subjectHandler *SubjectHandler) SetUserSubjectFavourite(ctx context.Context, setUserSubjectFavouriteRequest *subject.SetUserSubjectFavouriteRequest) (*subject.SetUserSubjectFavouriteResponse, error) {
 	return subjectHandler.subjectController.SetUserSubjectFavourite(ctx, setUserSubjectFavouriteRequest)
 }
+
+func (subjectHandler *SubjectHandler) SetSubjectModuleMapping(ctx context.Context, setSubjectModuleMappingRequest *subject.SetSubjectModuleMappingRequest) (*subject.SetSubjectModuleMappingResponse, error) {
+	return subjectHandler.subjectController.SetSubjectModuleMapping(ctx, setSubjectModuleMappingRequest)
+}

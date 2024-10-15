@@ -1,31 +1,14 @@
-from concurrent import futures
-import time
+from src.consumer.kafka_consumer import KafkaListener
+import asyncio
 import sys
 import os
-# import relative to cwd/src for generated proto files
-cwd = os.getcwd()
-src_path = os.path.join(cwd, 'src')
-sys.path.append(src_path)
 
-from src.protos import job_pb2, job_pb2_grpc
-import grpc
+# sys.path.append(os.path.join(os.path.dirname(__file__), 'src'))
+sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..', 'src')))
 
+async def main():
+    listener = KafkaListener(max_workers=5)
+    await listener.listen()
 
-class GreeterServicer(job_pb2_grpc.JobServiceServicer):
-    def ProcessJob(self, request, context):
-        print("Received job request")
-        return job_pb2.ProcessJobResponse(message="hello")
-def serve():
-    server = grpc.server(futures.ThreadPoolExecutor(max_workers=10))
-    job_pb2_grpc.add_JobServiceServicer_to_server(GreeterServicer(), server)
-    server.add_insecure_port('[::]:50051')
-    server.start()
-    print("Server started at port 50051")
-    try:
-        while True:
-            time.sleep(86400)  # Sleep for a day
-    except KeyboardInterrupt:
-        server.stop(0)
-
-if __name__ == '__main__':
-    serve()
+if __name__ == "__main__":
+    asyncio.run(main())

@@ -1,5 +1,7 @@
 
 import axios, { AxiosError } from 'axios';
+import { store } from '../store/store';
+import { addLoad, lessLoad } from '../store/loaderSlice';
 
 // Define the structure of the error response
 interface ApiErrorResponse {
@@ -14,10 +16,21 @@ export const apiClient = axios.create({
   withCredentials: true,
 });
 
+// Axios Interceptor for managing load count
+apiClient.interceptors.request.use((config) => {
+  // Dispatch addLoad when a request starts
+  store.dispatch(addLoad());
+  return config;
+});
+
 // Axios Interceptor for Global Error Handling
 apiClient.interceptors.response.use(
-  response => response, // Pass the response through if no error
+  response => {
+    store.dispatch(lessLoad());
+    return response;
+  }, // Pass the response through if no error
   (error: AxiosError) => {
+    store.dispatch(lessLoad());
     // check for error 400, 401, 403, 404, 500
     if (error.response?.status === 401) {
       // Redirect to login page if unauthenticated

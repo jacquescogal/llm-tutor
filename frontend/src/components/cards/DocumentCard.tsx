@@ -1,5 +1,7 @@
 import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
+import { uploadStatusToString } from "../../api/documentService";
+import { UploadStatus } from "../../types/enums";
 
 type Props = {
   title: string;
@@ -9,6 +11,7 @@ type Props = {
   updatedAt: string;
   memoryCount?: number;
   questionCount?: number;
+  status: UploadStatus;
 };
 
 const DocumentCard = (props: Props) => {
@@ -54,14 +57,10 @@ const DocumentCard = (props: Props) => {
         )}
       <div className="flex flex-row justify-between align-middle content-center text-center align-center ">
         <div className="w-full flex flex-row text-left text-xs justify-between select-none text-gray-500">
-          {
-            props.createdBy && (
-          
-          <div className="flex flex-col justify-between  w-full">
-            <span>Uploaded By: </span>
-            <span>{props.createdBy}</span>
+        <div className="flex flex-col justify-between  w-full">
+            <span>Upload Status: </span>
+            <span>{uploadStatusToString(props.status)}</span>
           </div>
-            )}
           <div className="flex flex-col justify-between  w-full">
             <span>Uploaded On: </span>
             <span>{props.createdAt}</span>

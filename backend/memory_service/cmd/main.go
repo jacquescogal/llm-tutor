@@ -6,11 +6,13 @@ import (
 	"memory_core/internal/controller"
 	"memory_core/internal/db"
 	"memory_core/internal/handler"
+	"memory_core/internal/producer"
 	"memory_core/internal/proto/document"
 	"memory_core/internal/proto/memory"
 	"memory_core/internal/proto/module"
 	"memory_core/internal/proto/question"
 	"memory_core/internal/proto/subject"
+	"memory_core/internal/proto/vector"
 	"memory_core/internal/repository"
 	"net"
 
@@ -35,20 +37,26 @@ func main() {
 	// Initialize MySQL connection
 	mysqlDB := db.NewDatabase()
 	defer mysqlDB.Close()
-
+	
+	// Initialize Kafka producer
+	kafkaProducer := producer.NewKafkaProducer()
 	// Initialize repositories and controllers
 	cacheStore := cache.NewCacheStore(redisClient.Client)
 	subjectRepo := repository.NewSubjectRepository()
 	moduleRepo := repository.NewModuleRepository()
 	userSubjectMapRepo := repository.NewUserSubjectMapRepository(cacheStore)
 	userModuleMapRepo := repository.NewUserModuleMapRepository(cacheStore)
+	subjectModuleMapRepo := repository.NewSubjectModuleMapRepository(cacheStore)
 	docRepo := repository.NewDocRepository()
+	// vector repo
+	vectorRepo := repository.NewVectorRepository(db.NewWeaviate().Conn)
 
-	subjectController := controller.NewSubjectController(mysqlDB.Conn, subjectRepo, userSubjectMapRepo)
+	subjectController := controller.NewSubjectController(mysqlDB.Conn, subjectRepo, userSubjectMapRepo,subjectModuleMapRepo)
 	moduleController := controller.NewModuleController(mysqlDB.Conn, moduleRepo, userModuleMapRepo)
-	docController := controller.NewDocController(mysqlDB.Conn, docRepo, moduleRepo, userModuleMapRepo)
+	docController := controller.NewDocController(mysqlDB.Conn, docRepo, moduleRepo, userModuleMapRepo, kafkaProducer)
 	questionController := controller.NewQuestionController(mysqlDB.Conn, repository.NewQuestionRepository(), docRepo, moduleRepo, userModuleMapRepo)
-	memoryController := controller.NewMemoryController(mysqlDB.Conn, repository.NewMemoryRepository(), userModuleMapRepo, moduleRepo, docRepo)
+	memoryController := controller.NewMemoryController(mysqlDB.Conn, repository.NewMemoryRepository(), userModuleMapRepo, moduleRepo, docRepo, vectorRepo)
+	vectorController := controller.NewVectorController(mysqlDB.Conn, vectorRepo,subjectModuleMapRepo)
 
 
 	// Initialize gRPC server and handlers
@@ -58,6 +66,7 @@ func main() {
 	docHandler := handler.NewDocHandler(docController)
 	questionHandler := handler.NewQuestionHandler(questionController)
 	memoryHandler := handler.NewMemoryHandler(memoryController)
+	vectorHandler := handler.NewVectorHandler(vectorController)
 
 	// Register services
 	subject.RegisterSubjectServiceServer(grpcServer, subjectHandler)
@@ -65,6 +74,7 @@ func main() {
 	document.RegisterDocServiceServer(grpcServer, docHandler)
 	question.RegisterQuestionServiceServer(grpcServer, questionHandler)
 	memory.RegisterMemoryServiceServer(grpcServer, memoryHandler)
+	vector.RegisterVectorServiceServer(grpcServer, vectorHandler)
 
 	// Start gRPC server and listen on port 50051
 	lis, err := net.Listen("tcp", ":50052")

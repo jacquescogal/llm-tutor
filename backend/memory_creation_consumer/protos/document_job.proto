@@ -1,0 +1,14 @@
+// document_job.proto
+
+syntax = "proto3";
+package document_job;
+
+
+option go_package = "%replace%/internal/proto/document_job";
+
+// use this job to get from the document service the full document and then process it
+message DocumentProcessingJob {
+    uint64 user_id = 1;
+    uint64 module_id = 2;
+    uint64 doc_id = 3;
+}

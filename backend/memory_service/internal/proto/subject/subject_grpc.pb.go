@@ -32,6 +32,7 @@ const (
 	SubjectService_DeleteSubject_FullMethodName                = "/subject.SubjectService/DeleteSubject"
 	SubjectService_SetUserSubjectFavourite_FullMethodName      = "/subject.SubjectService/SetUserSubjectFavourite"
 	SubjectService_SetUserSubjectRole_FullMethodName           = "/subject.SubjectService/SetUserSubjectRole"
+	SubjectService_SetSubjectModuleMapping_FullMethodName      = "/subject.SubjectService/SetSubjectModuleMapping"
 )
 
 // SubjectServiceClient is the client API for SubjectService service.
@@ -49,6 +50,7 @@ type SubjectServiceClient interface {
 	DeleteSubject(ctx context.Context, in *DeleteSubjectRequest, opts ...grpc.CallOption) (*DeleteSubjectResponse, error)
 	SetUserSubjectFavourite(ctx context.Context, in *SetUserSubjectFavouriteRequest, opts ...grpc.CallOption) (*SetUserSubjectFavouriteResponse, error)
 	SetUserSubjectRole(ctx context.Context, in *SetUserSubjectRoleRequest, opts ...grpc.CallOption) (*SetUserSubjectRoleResponse, error)
+	SetSubjectModuleMapping(ctx context.Context, in *SetSubjectModuleMappingRequest, opts ...grpc.CallOption) (*SetSubjectModuleMappingResponse, error)
 }
 
 type subjectServiceClient struct {
@@ -169,6 +171,16 @@ func (c *subjectServiceClient) SetUserSubjectRole(ctx context.Context, in *SetUs
 	return out, nil
 }
 
+func (c *subjectServiceClient) SetSubjectModuleMapping(ctx context.Context, in *SetSubjectModuleMappingRequest, opts ...grpc.CallOption) (*SetSubjectModuleMappingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetSubjectModuleMappingResponse)
+	err := c.cc.Invoke(ctx, SubjectService_SetSubjectModuleMapping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubjectServiceServer is the server API for SubjectService service.
 // All implementations must embed UnimplementedSubjectServiceServer
 // for forward compatibility.
@@ -184,6 +196,7 @@ type SubjectServiceServer interface {
 	DeleteSubject(context.Context, *DeleteSubjectRequest) (*DeleteSubjectResponse, error)
 	SetUserSubjectFavourite(context.Context, *SetUserSubjectFavouriteRequest) (*SetUserSubjectFavouriteResponse, error)
 	SetUserSubjectRole(context.Context, *SetUserSubjectRoleRequest) (*SetUserSubjectRoleResponse, error)
+	SetSubjectModuleMapping(context.Context, *SetSubjectModuleMappingRequest) (*SetSubjectModuleMappingResponse, error)
 	mustEmbedUnimplementedSubjectServiceServer()
 }
 
@@ -226,6 +239,9 @@ func (UnimplementedSubjectServiceServer) SetUserSubjectFavourite(context.Context
 }
 func (UnimplementedSubjectServiceServer) SetUserSubjectRole(context.Context, *SetUserSubjectRoleRequest) (*SetUserSubjectRoleResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method SetUserSubjectRole not implemented")
+}
+func (UnimplementedSubjectServiceServer) SetSubjectModuleMapping(context.Context, *SetSubjectModuleMappingRequest) (*SetSubjectModuleMappingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetSubjectModuleMapping not implemented")
 }
 func (UnimplementedSubjectServiceServer) mustEmbedUnimplementedSubjectServiceServer() {}
 func (UnimplementedSubjectServiceServer) testEmbeddedByValue()                        {}
@@ -446,6 +462,24 @@ func _SubjectService_SetUserSubjectRole_Handler(srv interface{}, ctx context.Con
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SubjectService_SetSubjectModuleMapping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetSubjectModuleMappingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubjectServiceServer).SetSubjectModuleMapping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubjectService_SetSubjectModuleMapping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubjectServiceServer).SetSubjectModuleMapping(ctx, req.(*SetSubjectModuleMappingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SubjectService_ServiceDesc is the grpc.ServiceDesc for SubjectService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -496,6 +530,10 @@ var SubjectService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "SetUserSubjectRole",
 			Handler:    _SubjectService_SetUserSubjectRole_Handler,
+		},
+		{
+			MethodName: "SetSubjectModuleMapping",
+			Handler:    _SubjectService_SetSubjectModuleMapping_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
