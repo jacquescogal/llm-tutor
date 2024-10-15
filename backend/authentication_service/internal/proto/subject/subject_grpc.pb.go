@@ -21,12 +21,18 @@ import (
 const _ = grpc.SupportPackageIsVersion9
 
 const (
-	SubjectService_CreateSubject_FullMethodName           = "/subject.SubjectService/CreateSubject"
-	SubjectService_GetSubjectById_FullMethodName          = "/subject.SubjectService/GetSubjectById"
-	SubjectService_GetSubjectsByUserId_FullMethodName     = "/subject.SubjectService/GetSubjectsByUserId"
-	SubjectService_GetSubjectsByNameSearch_FullMethodName = "/subject.SubjectService/GetSubjectsByNameSearch"
-	SubjectService_UpdateSubject_FullMethodName           = "/subject.SubjectService/UpdateSubject"
-	SubjectService_DeleteSubject_FullMethodName           = "/subject.SubjectService/DeleteSubject"
+	SubjectService_CreateSubject_FullMethodName                = "/subject.SubjectService/CreateSubject"
+	SubjectService_GetPublicSubjects_FullMethodName            = "/subject.SubjectService/GetPublicSubjects"
+	SubjectService_GetPrivateSubjectsByUserId_FullMethodName   = "/subject.SubjectService/GetPrivateSubjectsByUserId"
+	SubjectService_GetFavouriteSubjectsByUserId_FullMethodName = "/subject.SubjectService/GetFavouriteSubjectsByUserId"
+	SubjectService_GetSubjectById_FullMethodName               = "/subject.SubjectService/GetSubjectById"
+	SubjectService_GetSubjectsByUserId_FullMethodName          = "/subject.SubjectService/GetSubjectsByUserId"
+	SubjectService_GetSubjectsByNameSearch_FullMethodName      = "/subject.SubjectService/GetSubjectsByNameSearch"
+	SubjectService_UpdateSubject_FullMethodName                = "/subject.SubjectService/UpdateSubject"
+	SubjectService_DeleteSubject_FullMethodName                = "/subject.SubjectService/DeleteSubject"
+	SubjectService_SetUserSubjectFavourite_FullMethodName      = "/subject.SubjectService/SetUserSubjectFavourite"
+	SubjectService_SetUserSubjectRole_FullMethodName           = "/subject.SubjectService/SetUserSubjectRole"
+	SubjectService_SetSubjectModuleMapping_FullMethodName      = "/subject.SubjectService/SetSubjectModuleMapping"
 )
 
 // SubjectServiceClient is the client API for SubjectService service.
@@ -34,11 +40,17 @@ const (
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://pkg.go.dev/google.golang.org/grpc/?tab=doc#ClientConn.NewStream.
 type SubjectServiceClient interface {
 	CreateSubject(ctx context.Context, in *CreateSubjectRequest, opts ...grpc.CallOption) (*CreateSubjectResponse, error)
+	GetPublicSubjects(ctx context.Context, in *GetPublicSubjectsRequest, opts ...grpc.CallOption) (*GetPublicSubjectsResponse, error)
+	GetPrivateSubjectsByUserId(ctx context.Context, in *GetPrivateSubjectsByUserIdRequest, opts ...grpc.CallOption) (*GetPrivateSubjectsByUserIdResponse, error)
+	GetFavouriteSubjectsByUserId(ctx context.Context, in *GetFavouriteSubjectsByUserIdRequest, opts ...grpc.CallOption) (*GetFavouriteSubjectsByUserIdResponse, error)
 	GetSubjectById(ctx context.Context, in *GetSubjectByIdRequest, opts ...grpc.CallOption) (*GetSubjectByIdResponse, error)
 	GetSubjectsByUserId(ctx context.Context, in *GetSubjectsByUserIdRequest, opts ...grpc.CallOption) (*GetSubjectsByUserIdResponse, error)
 	GetSubjectsByNameSearch(ctx context.Context, in *GetSubjectsByNameSearchRequest, opts ...grpc.CallOption) (*GetSubjectsByNameSearchResponse, error)
 	UpdateSubject(ctx context.Context, in *UpdateSubjectRequest, opts ...grpc.CallOption) (*UpdateSubjectResponse, error)
 	DeleteSubject(ctx context.Context, in *DeleteSubjectRequest, opts ...grpc.CallOption) (*DeleteSubjectResponse, error)
+	SetUserSubjectFavourite(ctx context.Context, in *SetUserSubjectFavouriteRequest, opts ...grpc.CallOption) (*SetUserSubjectFavouriteResponse, error)
+	SetUserSubjectRole(ctx context.Context, in *SetUserSubjectRoleRequest, opts ...grpc.CallOption) (*SetUserSubjectRoleResponse, error)
+	SetSubjectModuleMapping(ctx context.Context, in *SetSubjectModuleMappingRequest, opts ...grpc.CallOption) (*SetSubjectModuleMappingResponse, error)
 }
 
 type subjectServiceClient struct {
@@ -53,6 +65,36 @@ func (c *subjectServiceClient) CreateSubject(ctx context.Context, in *CreateSubj
 	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
 	out := new(CreateSubjectResponse)
 	err := c.cc.Invoke(ctx, SubjectService_CreateSubject_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *subjectServiceClient) GetPublicSubjects(ctx context.Context, in *GetPublicSubjectsRequest, opts ...grpc.CallOption) (*GetPublicSubjectsResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPublicSubjectsResponse)
+	err := c.cc.Invoke(ctx, SubjectService_GetPublicSubjects_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *subjectServiceClient) GetPrivateSubjectsByUserId(ctx context.Context, in *GetPrivateSubjectsByUserIdRequest, opts ...grpc.CallOption) (*GetPrivateSubjectsByUserIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetPrivateSubjectsByUserIdResponse)
+	err := c.cc.Invoke(ctx, SubjectService_GetPrivateSubjectsByUserId_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *subjectServiceClient) GetFavouriteSubjectsByUserId(ctx context.Context, in *GetFavouriteSubjectsByUserIdRequest, opts ...grpc.CallOption) (*GetFavouriteSubjectsByUserIdResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(GetFavouriteSubjectsByUserIdResponse)
+	err := c.cc.Invoke(ctx, SubjectService_GetFavouriteSubjectsByUserId_FullMethodName, in, out, cOpts...)
 	if err != nil {
 		return nil, err
 	}
@@ -109,16 +151,52 @@ func (c *subjectServiceClient) DeleteSubject(ctx context.Context, in *DeleteSubj
 	return out, nil
 }
 
+func (c *subjectServiceClient) SetUserSubjectFavourite(ctx context.Context, in *SetUserSubjectFavouriteRequest, opts ...grpc.CallOption) (*SetUserSubjectFavouriteResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetUserSubjectFavouriteResponse)
+	err := c.cc.Invoke(ctx, SubjectService_SetUserSubjectFavourite_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *subjectServiceClient) SetUserSubjectRole(ctx context.Context, in *SetUserSubjectRoleRequest, opts ...grpc.CallOption) (*SetUserSubjectRoleResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetUserSubjectRoleResponse)
+	err := c.cc.Invoke(ctx, SubjectService_SetUserSubjectRole_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
+func (c *subjectServiceClient) SetSubjectModuleMapping(ctx context.Context, in *SetSubjectModuleMappingRequest, opts ...grpc.CallOption) (*SetSubjectModuleMappingResponse, error) {
+	cOpts := append([]grpc.CallOption{grpc.StaticMethod()}, opts...)
+	out := new(SetSubjectModuleMappingResponse)
+	err := c.cc.Invoke(ctx, SubjectService_SetSubjectModuleMapping_FullMethodName, in, out, cOpts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 // SubjectServiceServer is the server API for SubjectService service.
 // All implementations must embed UnimplementedSubjectServiceServer
 // for forward compatibility.
 type SubjectServiceServer interface {
 	CreateSubject(context.Context, *CreateSubjectRequest) (*CreateSubjectResponse, error)
+	GetPublicSubjects(context.Context, *GetPublicSubjectsRequest) (*GetPublicSubjectsResponse, error)
+	GetPrivateSubjectsByUserId(context.Context, *GetPrivateSubjectsByUserIdRequest) (*GetPrivateSubjectsByUserIdResponse, error)
+	GetFavouriteSubjectsByUserId(context.Context, *GetFavouriteSubjectsByUserIdRequest) (*GetFavouriteSubjectsByUserIdResponse, error)
 	GetSubjectById(context.Context, *GetSubjectByIdRequest) (*GetSubjectByIdResponse, error)
 	GetSubjectsByUserId(context.Context, *GetSubjectsByUserIdRequest) (*GetSubjectsByUserIdResponse, error)
 	GetSubjectsByNameSearch(context.Context, *GetSubjectsByNameSearchRequest) (*GetSubjectsByNameSearchResponse, error)
 	UpdateSubject(context.Context, *UpdateSubjectRequest) (*UpdateSubjectResponse, error)
 	DeleteSubject(context.Context, *DeleteSubjectRequest) (*DeleteSubjectResponse, error)
+	SetUserSubjectFavourite(context.Context, *SetUserSubjectFavouriteRequest) (*SetUserSubjectFavouriteResponse, error)
+	SetUserSubjectRole(context.Context, *SetUserSubjectRoleRequest) (*SetUserSubjectRoleResponse, error)
+	SetSubjectModuleMapping(context.Context, *SetSubjectModuleMappingRequest) (*SetSubjectModuleMappingResponse, error)
 	mustEmbedUnimplementedSubjectServiceServer()
 }
 
@@ -131,6 +209,15 @@ type UnimplementedSubjectServiceServer struct{}
 
 func (UnimplementedSubjectServiceServer) CreateSubject(context.Context, *CreateSubjectRequest) (*CreateSubjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method CreateSubject not implemented")
+}
+func (UnimplementedSubjectServiceServer) GetPublicSubjects(context.Context, *GetPublicSubjectsRequest) (*GetPublicSubjectsResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPublicSubjects not implemented")
+}
+func (UnimplementedSubjectServiceServer) GetPrivateSubjectsByUserId(context.Context, *GetPrivateSubjectsByUserIdRequest) (*GetPrivateSubjectsByUserIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetPrivateSubjectsByUserId not implemented")
+}
+func (UnimplementedSubjectServiceServer) GetFavouriteSubjectsByUserId(context.Context, *GetFavouriteSubjectsByUserIdRequest) (*GetFavouriteSubjectsByUserIdResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method GetFavouriteSubjectsByUserId not implemented")
 }
 func (UnimplementedSubjectServiceServer) GetSubjectById(context.Context, *GetSubjectByIdRequest) (*GetSubjectByIdResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method GetSubjectById not implemented")
@@ -146,6 +233,15 @@ func (UnimplementedSubjectServiceServer) UpdateSubject(context.Context, *UpdateS
 }
 func (UnimplementedSubjectServiceServer) DeleteSubject(context.Context, *DeleteSubjectRequest) (*DeleteSubjectResponse, error) {
 	return nil, status.Errorf(codes.Unimplemented, "method DeleteSubject not implemented")
+}
+func (UnimplementedSubjectServiceServer) SetUserSubjectFavourite(context.Context, *SetUserSubjectFavouriteRequest) (*SetUserSubjectFavouriteResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetUserSubjectFavourite not implemented")
+}
+func (UnimplementedSubjectServiceServer) SetUserSubjectRole(context.Context, *SetUserSubjectRoleRequest) (*SetUserSubjectRoleResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetUserSubjectRole not implemented")
+}
+func (UnimplementedSubjectServiceServer) SetSubjectModuleMapping(context.Context, *SetSubjectModuleMappingRequest) (*SetSubjectModuleMappingResponse, error) {
+	return nil, status.Errorf(codes.Unimplemented, "method SetSubjectModuleMapping not implemented")
 }
 func (UnimplementedSubjectServiceServer) mustEmbedUnimplementedSubjectServiceServer() {}
 func (UnimplementedSubjectServiceServer) testEmbeddedByValue()                        {}
@@ -182,6 +278,60 @@ func _SubjectService_CreateSubject_Handler(srv interface{}, ctx context.Context,
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(SubjectServiceServer).CreateSubject(ctx, req.(*CreateSubjectRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SubjectService_GetPublicSubjects_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPublicSubjectsRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubjectServiceServer).GetPublicSubjects(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubjectService_GetPublicSubjects_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubjectServiceServer).GetPublicSubjects(ctx, req.(*GetPublicSubjectsRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SubjectService_GetPrivateSubjectsByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetPrivateSubjectsByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubjectServiceServer).GetPrivateSubjectsByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubjectService_GetPrivateSubjectsByUserId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubjectServiceServer).GetPrivateSubjectsByUserId(ctx, req.(*GetPrivateSubjectsByUserIdRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SubjectService_GetFavouriteSubjectsByUserId_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(GetFavouriteSubjectsByUserIdRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubjectServiceServer).GetFavouriteSubjectsByUserId(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubjectService_GetFavouriteSubjectsByUserId_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubjectServiceServer).GetFavouriteSubjectsByUserId(ctx, req.(*GetFavouriteSubjectsByUserIdRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -276,6 +426,60 @@ func _SubjectService_DeleteSubject_Handler(srv interface{}, ctx context.Context,
 	return interceptor(ctx, in, info, handler)
 }
 
+func _SubjectService_SetUserSubjectFavourite_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetUserSubjectFavouriteRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubjectServiceServer).SetUserSubjectFavourite(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubjectService_SetUserSubjectFavourite_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubjectServiceServer).SetUserSubjectFavourite(ctx, req.(*SetUserSubjectFavouriteRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SubjectService_SetUserSubjectRole_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetUserSubjectRoleRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubjectServiceServer).SetUserSubjectRole(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubjectService_SetUserSubjectRole_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubjectServiceServer).SetUserSubjectRole(ctx, req.(*SetUserSubjectRoleRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _SubjectService_SetSubjectModuleMapping_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(SetSubjectModuleMappingRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(SubjectServiceServer).SetSubjectModuleMapping(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: SubjectService_SetSubjectModuleMapping_FullMethodName,
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(SubjectServiceServer).SetSubjectModuleMapping(ctx, req.(*SetSubjectModuleMappingRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
 // SubjectService_ServiceDesc is the grpc.ServiceDesc for SubjectService service.
 // It's only intended for direct use with grpc.RegisterService,
 // and not to be introspected or modified (even as a copy)
@@ -286,6 +490,18 @@ var SubjectService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "CreateSubject",
 			Handler:    _SubjectService_CreateSubject_Handler,
+		},
+		{
+			MethodName: "GetPublicSubjects",
+			Handler:    _SubjectService_GetPublicSubjects_Handler,
+		},
+		{
+			MethodName: "GetPrivateSubjectsByUserId",
+			Handler:    _SubjectService_GetPrivateSubjectsByUserId_Handler,
+		},
+		{
+			MethodName: "GetFavouriteSubjectsByUserId",
+			Handler:    _SubjectService_GetFavouriteSubjectsByUserId_Handler,
 		},
 		{
 			MethodName: "GetSubjectById",
@@ -306,6 +522,18 @@ var SubjectService_ServiceDesc = grpc.ServiceDesc{
 		{
 			MethodName: "DeleteSubject",
 			Handler:    _SubjectService_DeleteSubject_Handler,
+		},
+		{
+			MethodName: "SetUserSubjectFavourite",
+			Handler:    _SubjectService_SetUserSubjectFavourite_Handler,
+		},
+		{
+			MethodName: "SetUserSubjectRole",
+			Handler:    _SubjectService_SetUserSubjectRole_Handler,
+		},
+		{
+			MethodName: "SetSubjectModuleMapping",
+			Handler:    _SubjectService_SetSubjectModuleMapping_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},

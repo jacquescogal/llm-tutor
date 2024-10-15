@@ -8,11 +8,21 @@ option go_package = "authentication_service/internal/proto/subject";
 
 service SubjectService {
     rpc CreateSubject (CreateSubjectRequest) returns (CreateSubjectResponse);
+
+
+    rpc GetPublicSubjects (GetPublicSubjectsRequest) returns (GetPublicSubjectsResponse); // public Subjects
+    rpc GetPrivateSubjectsByUserId (GetPrivateSubjectsByUserIdRequest) returns (GetPrivateSubjectsByUserIdResponse); // private Subjects
+    rpc GetFavouriteSubjectsByUserId (GetFavouriteSubjectsByUserIdRequest) returns (GetFavouriteSubjectsByUserIdResponse); // favourite Subjects that are either public or authorised
+
     rpc GetSubjectById (GetSubjectByIdRequest) returns (GetSubjectByIdResponse);
     rpc GetSubjectsByUserId (GetSubjectsByUserIdRequest) returns (GetSubjectsByUserIdResponse);
     rpc GetSubjectsByNameSearch (GetSubjectsByNameSearchRequest) returns (GetSubjectsByNameSearchResponse);
     rpc UpdateSubject (UpdateSubjectRequest) returns (UpdateSubjectResponse);
     rpc DeleteSubject (DeleteSubjectRequest) returns (DeleteSubjectResponse);
+
+    rpc SetUserSubjectFavourite (SetUserSubjectFavouriteRequest) returns (SetUserSubjectFavouriteResponse);
+    rpc SetUserSubjectRole (SetUserSubjectRoleRequest) returns (SetUserSubjectRoleResponse);
+    rpc SetSubjectModuleMapping (SetSubjectModuleMappingRequest) returns (SetSubjectModuleMappingResponse);
   }
   
 
@@ -27,6 +37,44 @@ message CreateSubjectRequest {
   
   message CreateSubjectResponse {
   }
+
+  message GetPublicSubjectsRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetPublicSubjectsResponse {
+    repeated FullSubject subjects = 1;
+  }
+
+  message GetPrivateSubjectsByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetPrivateSubjectsByUserIdResponse {
+    repeated FullSubject subjects = 1;
+  }
+
+  message GetFavouriteSubjectsByUserIdRequest {
+    uint64 user_id = 1;
+    uint32 page_number = 2;
+    uint32 page_size = 3;
+    common.ORDER_BY_FIELD order_by_field = 4;
+    common.ORDER_BY_DIRECTION order_by_direction = 5;
+  }
+
+  message GetFavouriteSubjectsByUserIdResponse {
+    repeated FullSubject subjects = 1;
+  }
+
+
   
   message GetSubjectByIdRequest {
     uint64 user_id = 1;
@@ -34,7 +82,7 @@ message CreateSubjectRequest {
   }
   
   message GetSubjectByIdResponse {
-    DBSubject subject = 1;
+    FullSubject subject = 1;
   }
   
   message GetSubjectsByUserIdRequest {
@@ -46,7 +94,7 @@ message CreateSubjectRequest {
   }
   
   message GetSubjectsByUserIdResponse {
-    repeated DBSubject subjects = 1;
+    repeated FullSubject subjects = 1;
   }
   
   message GetSubjectsByNameSearchRequest {
@@ -59,7 +107,7 @@ message CreateSubjectRequest {
   }
   
   message GetSubjectsByNameSearchResponse {
-    repeated DBSubject subjects = 1;
+    repeated FullSubject subjects = 1;
   }
   
   message UpdateSubjectRequest {
@@ -79,6 +127,42 @@ message CreateSubjectRequest {
   }
   
   message DeleteSubjectResponse {
+  }
+
+  message SetUserSubjectFavouriteRequest {
+    uint64 user_id = 1;
+    uint64 subject_id = 2;
+    bool is_favourite = 3;
+  }
+
+  message SetUserSubjectFavouriteResponse {
+  }
+
+  message  SetUserSubjectRoleRequest {
+    uint64 user_id = 1;
+    uint64 subject_id = 2;
+    common.UserSubjectRole user_subject_role = 3;
+  }
+
+  message SetUserSubjectRoleResponse {
+  }
+
+    // should be repeated module_id
+    message SetSubjectModuleMappingRequest{
+      uint64 user_id = 1;
+      uint64 subject_id = 2;
+      repeated uint64 module_ids = 3;
+    }
+  
+    message SetSubjectModuleMappingResponse{
+    }
+  
+
+  // Consolidated Models
+  message FullSubject {
+    DBSubject subject = 1;
+    common.UserSubjectRole user_subject_role = 2;
+    bool is_favourite = 3;
   }
 
 // DB Models

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Chat, ENTITY_TYPE, ID_TYPE } from "../../types/chat";
 import {
   createGeneration,

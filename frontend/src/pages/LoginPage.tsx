@@ -1,4 +1,3 @@
-import React from 'react'
 import LoginCard from '../components/cards/LoginCard'
 import { CrumbHelperSetRootLink } from '../store/helpers/crumbHelper'
 

@@ -1,0 +1,35 @@
+// vector.proto
+
+syntax = "proto3";
+package vector;
+import "common.proto";
+
+
+option go_package = "authentication_service/internal/proto/vector";
+
+service VectorService {
+    rpc CreateMemoryVector (CreateMemoryVectorRequest) returns (CreateMemoryVectorResponse);
+    rpc SearchMemoryVector (SearchMemoryVectorRequest) returns (SearchMemoryVectorResponse);
+}
+
+message CreateMemoryVectorRequest {
+    uint64 module_id = 1;
+    uint64 memory_id = 2;
+    string memory_title = 3;
+    string memory_content = 4;
+}
+
+message CreateMemoryVectorResponse {
+}
+
+message SearchMemoryVectorRequest {
+    string search_query = 1;
+    uint64 limit = 2;
+    uint64 id = 3;
+    common.IDType id_type = 4;
+}
+
+
+message SearchMemoryVectorResponse {
+    bytes json_response = 1;
+}
