@@ -1,134 +1,154 @@
-# Readme.md
+# Tutor AI
 
-![alt text](./assets/architecture.png)
+Tutor AI is a full-stack learning platform that turns uploaded course material into searchable study resources. Users organize PDFs into subjects and modules, the backend processes those documents asynchronously, and the app generates summaries, memory cards, quizzes, and retrieval-augmented chat over the resulting knowledge base.
 
-## 1. Setup
+The project is intentionally service-oriented: a React client talks to a Go Backend-for-Frontend over REST, the BFF fans out to internal gRPC services, Kafka decouples document ingestion, MySQL stores structured learning data, Redis backs sessions and cached access metadata, and Weaviate stores embedded memory chunks for scoped semantic retrieval.
 
-1. Have docker installed and replace the placeholders in docker-compose.yml
-2. Run the following command: 'make run'
+![Architecture diagram for Tutor AI](./assets/architecture.png)
 
-## 2. Description
+## What It Does
 
-Tutor AI is a web application that allows users to store knowledge in a vector database and generate FlashCards, Quizzes, Memory chunks, and Summaries from the stored knowledge. Documents are uploaded to module objects that can be shared amongst subjects.
-Subject-Module-Document Relationship:
-![alt text](./assets/subject-mod-doc-rls.png)
+- Authenticated learning workspace with user registration, login, and Redis-backed sessions.
+- Subject and module organization with public/private discovery, favourites, search, and many-to-many subject-module mapping.
+- PDF upload through the BFF to S3, followed by asynchronous document processing through Kafka.
+- LLM-powered document summarization, memory extraction, and quiz generation from uploaded material.
+- Multiple question formats, including single-answer MCQ, multi-answer MCQ, and open-answer questions stored as protobuf payloads.
+- Retrieval-augmented chat over a selected document, module, or subject using vector prefilters.
+- Docker Compose environment for the frontend, Go services, Python services, Kafka, MySQL, Redis, and Weaviate.
 
-Capabilities:
+## Core Architecture
 
-1. Send files to server to process and store embedded knowledge in a vector database [done]
-2. Generate FlashCards from the stored knowledge [done]
-3. Generate Quiz from the stored knowledge [done]
-4. Score the user based on the quiz [to-do]
-5. Generate a summary of the stored knowledge [done]
-6. Retrieval Augmented Generation to query the stored knowledge [done]
-7. Login and registration for different users [done]
-8. Modules may be shared between subjects [done]
-9. Able to give read/write access to other users [to-do]
-10. Generate a report of the user's progress [to-do]
-11. Generate a report of the user's performance [to-do]
+### Frontend
 
-Technologies used:
+The client is a React + TypeScript Vite app using React Router, Redux Toolkit, Axios, Tailwind, and DaisyUI. It provides the user-facing workflows for authentication, exploring public and private subjects/modules, marking favourites, uploading documents, reviewing generated memories/questions, and chatting with document-backed context.
 
-1. GoLang
-    a. Gin
-    b. GRPC
-    c. Confluent Kafka Producer
-2. React
-    a. Typescript
-    b. Typescript
-    c. Axios
-3. Python
-    a. GRPC
-    b. Confluent Kafka Consumer
-4. MySQL
-5. Kafka
-6. Weaviate
-7. Docker
-8. Redis
+### Go BFF
 
-## 3. Architecture
+The BFF exposes the browser-facing REST API with Gin. It owns HTTP concerns such as CORS, session middleware, multipart PDF upload, S3 object creation, request shaping, and response translation. Internally it calls the auth, memory, document, module, subject, question, and generation services over gRPC.
 
-![alt text](./assets/architecture.png)
+### Authentication Service
 
-### 3.1. Frontend
+The authentication service is a Go gRPC service backed by MySQL and Redis. MySQL stores user credentials as salted bcrypt hashes, while Redis stores active sessions and supports distributed locking around authentication flows.
 
-React Typescript is used to create the frontend. The frontend communicates with the backend using REST APIs. The frontend is responsible for sending files to the backend, displaying the generated FlashCards, Quizzes, and Summaries. The frontend also allows the user to interact with the generated FlashCards and Quizzes.
+### Memory Service
 
-### 3.2. Backend
+The memory service is the primary Go domain service for subjects, modules, documents, generated memories, questions, and vector search. It stores relational state in MySQL, publishes document-processing jobs to Kafka, writes vectorized memory chunks to Weaviate, and enforces view/edit access checks around user-module relationships.
 
-#### 3.2.1. BFF (GoLang)
+### Memory Creation Consumer
 
-Ingress: Gin REST API
-Egress: GRPC
+The Python consumer listens for `create_document` Kafka events. For each uploaded PDF, it downloads the source file from S3, converts it to Markdown with `pymupdf4llm`, summarizes large documents recursively when needed, generates study memories and quiz questions with the OpenAI API, and writes the generated artifacts back through the memory service's gRPC APIs.
 
-The Backend for Frontend is written in GoLang. The BFF is for routing requests from the frontend to the appropriate service. Eg authentication, file upload, and document processing.
+### Generation Service
 
-#### 3.2.2. Authentication (GoLang)
+The Python generation service serves RAG chat over gRPC. It uses LangChain's conversational retrieval flow, a Weaviate-backed retriever, chat history, and entity-scoped filters so users can ask questions against a document, module, or subject instead of an unbounded global index.
 
-Ingress: GRPC
-Egress: GRPC
+## Data Model
 
-The authentication service is in charge of creating users, sessions and deleting sessions. The service communicates with the MySQL database to store user information and the Redis database to store session information.
+Subjects, modules, and documents are modeled separately so the same module can be reused across multiple subjects without duplicating documents or generated content.
 
-#### 3.2.3. Memory Creation Consumer (Python)
+![Subject-module-document relationship](./assets/subject-mod-doc-rls.png)
 
-Ingress: Kafka Event
-Egress: GRPC
+The relational schema stores:
 
-The Memory Creation Consumer is written in Python. The consumer listens to events from Kafka for documents to be processed. The consumer processes the document and stores the knowledge, summary, memory chunks, quizzes, and flashcards in the database by querying the openai API.
+- users and bcrypt password hashes in the auth database;
+- subjects, modules, user ownership/favourite mappings, and subject-module mappings;
+- documents with upload status and S3 object keys;
+- generated memories with matching Weaviate vector UUIDs;
+- generated questions as typed protobuf blobs.
 
-#### 3.2.4. Generation Service (Python)
+![Database schema diagram](./assets/database-schema.png)
 
-Ingress: GRPC
-Egress: GRPC
+## Document Processing Flow
 
-The Generation Service is in charge of general chat features such as RAG question and answering based on context. THe service communicates with memory service to fetch the knowledge to contextualise the question.
+1. The user uploads a PDF to a module from the React app.
+2. The BFF uploads the file to S3 and asks the memory service to create a queued document record.
+3. The memory service commits the document metadata in MySQL and publishes a `create_document` Kafka event.
+4. The Python consumer downloads the PDF, extracts Markdown, summarizes the content, and generates study artifacts.
+5. The consumer writes summaries, memory chunks, and questions back to the memory service.
+6. The memory service persists relational records and creates corresponding Weaviate objects for semantic search.
+7. The generation service retrieves scoped context from Weaviate when the user asks questions in chat.
 
-#### 3.2.5. Memory Service (GoLang)
+## Tech Stack
 
-Ingress: GRPC
-Egress: GRPC
+| Layer | Technologies |
+| --- | --- |
+| Frontend | React, TypeScript, Vite, React Router, Redux Toolkit, Tailwind, DaisyUI, Axios |
+| API Gateway | Go, Gin, gRPC clients, AWS SDK for S3 |
+| Core Services | Go gRPC services for authentication, memory, documents, modules, subjects, and questions |
+| Async Workers | Python, Kafka consumer, OpenAI API, LangChain, `pymupdf4llm` |
+| Storage | MySQL, Redis, Weaviate, S3 |
+| Messaging | Kafka + Zookeeper |
+| Local Runtime | Docker Compose, Make |
 
-The Memory Service is in charge of storing and retrieving knowledge, summaries, memory chunks, quizzes, and flashcards. The service communicates with the MySQL database to store and retrieve the information.
+## Running Locally
 
-#### 3.2.6. Evaluation Service (Golang)
+Prerequisites:
 
-Ingress: GRPC
-Egress: GRPC
+- Docker and Docker Compose
+- `make`
+- AWS credentials and an S3 bucket for uploaded PDFs
+- OpenAI API key
+- LlamaParse key if you extend the parsing path that uses it
 
-The Evaluation Service is in charge of historical test results and user performance. The service communicates with the MySQL database to store and retrieve the information.
+Configure the placeholder values in `docker-compose.yml`:
 
-#### 3.2.7. Evaluation Grading Consumer (Python)
+- `OPENAI_API_KEY` / `OPENAI_APIKEY`
+- `AWS_ACCESS_KEY_ID`
+- `AWS_SECRET_ACCESS_KEY`
+- `AWS_REGION`
+- `S3_BUCKET_NAME`
+- `LLAMA_PARSER_KEY`
 
-Ingress: Kafka Event
-Egress: GRPC
+Then start the stack:
 
-The Evaluation Grading Consumer is written in Python. The consumer listens to events from Kafka for tests to be graded and queries the openai API to grade the test.
+```bash
+make run
+```
 
-### 3.3. Database
+Rebuild service images after dependency or Dockerfile changes:
 
-#### 3.3.1. MySQL Auth
+```bash
+make run_build
+```
 
-The MySQL database is used to store user information such as username and salted hashed password.
+Stop the stack:
 
-#### 3.3.2. MySQL Memory
+```bash
+make stop
+```
 
-The MySQL database is used to store knowledge, summaries, memory chunks, quizzes, and flashcards.
+Reset local volumes, including MySQL and Weaviate data:
 
-#### 3.3.3. Redis
+```bash
+make reset
+```
 
-Redis cache are used to store session information and cache frequently accessed data.
+Once the stack is running, the frontend is served at `http://localhost:5173` and the BFF listens on `http://localhost:8000`.
 
-#### 3.3.4. Weaviate
+## Repository Layout
 
-Weaviate is used to store the knowledge in a vector database. Capable of embedding documents using openAI module and querying the knowledge. Prefilter capabilities are used to filter the knowledge based on the user's query.
+```text
+.
++-- backend
+|   +-- authentication_service     # Go gRPC auth service
+|   +-- bff                        # Go Gin REST gateway and gRPC client layer
+|   +-- generation_service         # Python gRPC RAG chat service
+|   +-- memory_creation_consumer   # Python Kafka worker for document processing
+|   +-- memory_service             # Go gRPC domain service and Kafka producer
++-- database
+|   +-- auth_scripts               # MySQL auth schema
+|   +-- memory_scripts             # MySQL learning-domain schema
++-- frontend                       # React + TypeScript app
++-- protos                         # Shared protobuf contracts
++-- assets                         # Architecture and schema diagrams
++-- docker-compose.yml
++-- makefile
+```
 
-### 3.4. MQ
+## Design Notes
 
-#### 3.4.1. Kafka
-
-Used to decouple the services and allow for asynchronous processing of events such as document processing and test grading.
-
-## 4. DB Design
-
-![alt text](./assets/database-schema.png)
+- REST is kept at the application boundary; internal service calls use protobuf and gRPC contracts.
+- Long-running document processing is event-driven so uploads can return quickly while generated content is produced in the background.
+- Relational data and vector data are deliberately split: MySQL remains the source of truth for ownership, hierarchy, upload status, and generated artifacts; Weaviate serves semantic retrieval.
+- Subject, module, and document IDs are carried through the RAG path so retrieval can be scoped to the user's current learning context.
+- The current architecture leaves clear extension points for collaborative permissioning, quiz scoring, and longitudinal learner analytics without requiring changes to the ingestion pipeline.
